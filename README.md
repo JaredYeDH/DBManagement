@@ -15,4 +15,4 @@ Layout
                      
 Methodology
 -----------
-  sql template lexical parser : Finite Sate Machine
+  sql template lexical parser : Finite Sates Machine
