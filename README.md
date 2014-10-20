@@ -10,8 +10,7 @@ Layout
             DAO->
                 sqlparser.py 
     // pending to be changed in the future, and will be wrapped in Class name space for ease to use
-    // this version is a powerful substitution for old sql template parser, which is developed as sql
-    // template lexical parsing tool.
+    // this version is a powerful substitution for old sql template parser, which was developed as sql template lexical parsing tool under the influence of mysql-python-connector. But the string template is really bad. So I decied to develop a simple sql template parser
                      
                      
 -- Methodology--
