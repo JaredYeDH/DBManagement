@@ -13,5 +13,6 @@ Layout
     // this version is a powerful substitution for old sql template parser, which was developed as sql template lexical parsing tool under the influence of mysql-python-connector. But the string template is really bad. So I decied to develop a simple sql template parser
                      
                      
--- Methodology--
+Methodology
+-----------
   sql template lexical parser : Finite Sate Machine
