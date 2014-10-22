@@ -10,9 +10,11 @@ Layout
             DAO->
                 sqlparser.py 
     // pending to be changed in the future, and will be wrapped in Class name space for ease to use
-    // this version is a powerful substitution for old sql template parser, which was developed as sql template lexical parsing tool under the influence of mysql-python-connector. But the string template is really bad. So I decied to develop a simple sql template parser
-                     
+    // this version is a powerful substitution for old sql template parser, which was developed as sql template lexical     // parsing tool under the influence of mysql-python-connector. But the string template is really bad. So I decied      // to develop a simple sql template parser
+                Database.py
+    // This file defined master-slave database model to handle users' data connection with database.            
                      
 Methodology
 -----------
-  sql template lexical parser : Finite Sates Machine
+    sql template lexical parser : Finite Sates Machine
+    database : basic event-loop and master-slaves architecture. Database shards system is just another wrap upon this          model, which is very easy to use.
