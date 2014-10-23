@@ -11,8 +11,8 @@ class SQLparser(object):
         self.hint  = hint_str
         self.sql_str = sql_str
                 
-        self.operate_stack  = []
-        self.operant_queue= []
+        self.operate_stack = []
+        self.operant_queue = []
         self.sql_clist  = []
         self.backup  = []
         
