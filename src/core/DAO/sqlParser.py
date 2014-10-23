@@ -9,10 +9,10 @@ class SQLparser(object):
     def __init__(self, sql_str, *args_str, **hint_str):
         self.args = args_str
         self.hint  = hint_str
-        self.slq_str= sql_str
+        self.sql_str = sql_str
                 
         self.operate_stack  = []
-        self.perant_queue = []
+        self.operant_queue= []
         self.sql_clist  = []
         self.backup  = []
         
@@ -189,10 +189,12 @@ class SQLparser(object):
     
     # main loop    
     def begin(self):
-        for data_str in self.args_str:
+        for data in self.args:
             try:
-                self.dataParser(data_str, self.sql_str)
+                self.dataParser(data.__str__(), self.sql_str)
             except TypeError as e:
                 self.backup.append(self.sql_str)
                 self.sql_str = e.sql
+                
+        return self.sql_clist
 

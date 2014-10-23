@@ -5,20 +5,20 @@ Created on 20 Oct, 2014
 @author: wangyi
 '''
 # -- sys --
+import contextlib
+import queue
 import re
 import sys
-import contextlib
-
-# -- master - slaves architecture --
 import threading
-import queue
 
-# --third party--
 import mysql.connector
 
+# -- master - slaves architecture --
+# --third party--
 # --local dependency--
 #from core.DAO.Log.LogManagement import logManager
 #from core.utils.timmer import timmer, delta
+
 from core.DAO.sqlParser import SQLparser
 
 __author__ = "Wang Yi/Lei"
