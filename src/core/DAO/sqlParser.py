@@ -189,6 +189,8 @@ class SQLparser(object):
     
     # main loop    
     def begin(self):
+        if  self.args == ():
+            return [self.sql_str]
         for data in self.args:
             try:
                 self.dataParser(data.__str__(), self.sql_str)
@@ -196,5 +198,5 @@ class SQLparser(object):
                 self.backup.append(self.sql_str)
                 self.sql_str = e.sql
                 
-        return self.sql_clist
+        return  self.sql_clist
 
