@@ -27,7 +27,7 @@ __credits__= "all active authors in StackExchange, whom I learn a lot from"
 # The prototype maintain global connector within an instance of the class life time
 # As a part of data oriented work, data migration or converted from different servers are fairly frequent
 # MySQL connector maintains a threads pool by default to create multiple connectors to a same database simutaneously  
-class Database_Prototype(object):
+class Connector(object):
     # default local machine DB config
     host     = "localhost"
     user     = "root"
@@ -55,7 +55,7 @@ WHERE table_schema = '%s' AND
     
     def __init__(self, **config): 
 # following method discarded, might be consider a universe initial method:
-        
+        print('db start')
         # connection should lie in object domain, or simply put for enduring connection 
         if config == {}:     
             self.connection=mysql.connector.connect(host=self.host,  
@@ -102,16 +102,16 @@ WHERE table_schema = '%s' AND
     # This method can be safe
     def __del__(self):
         if self.connection:
-            print('\tdb deleted\t')
+            print('db deleted')
             self.connection.close()   
             
 
 # the basic database is used for querying or non-transaction based database interacting
 # the database alwasy returns Json style data in python             
-class Database_Basic(Database_Prototype): 
+class DataBase(Connector): 
     
     def __init__(self, **config):
-        super(Database_Basic, self).__init__(**config)
+        super(DataBase, self).__init__(**config)
         
         self._output = queue.Queue()
         
@@ -127,8 +127,8 @@ class Database_Basic(Database_Prototype):
                 callback(sql)
                 
     def onQuery(self, sql):
-        print('query begins')
-        print( self.__str__() + '--' + self.cursor.__str__() )
+        print('\t query begins')
+        print( '\t\t ' + self.__str__() + '--' + self.cursor.__str__() )
         try:
             self.cursor.execute(sql)
             results = self.cursor.fetchall()
@@ -136,7 +136,7 @@ class Database_Basic(Database_Prototype):
         except mysql.connector.Error as err:
             print( 'Error 03! ' + self.__str__() )
             raise(err)
-        print('query ends')
+        print('\t query ends')
     
     def onAlter(self, sql):
         self.cursor.execute(sql)
@@ -172,7 +172,7 @@ class Database_Basic(Database_Prototype):
 #-- datatype mapping function--
     
     def json(self,results):
-        print('transform begins')
+        print('\t\t transform begins')
         list = []
         for row in results:
             dict = {} 
@@ -194,10 +194,10 @@ class Database_Basic(Database_Prototype):
         return "Database_Basic"               
 
                  
-class Database_Adv_Task_Loop(Database_Basic, threading.Thread):
+class DBManager(DataBase, threading.Thread):
 
     def __init__(self, **config):
-        Database_Basic.__init__(self, **config)
+        DataBase.__init__(self, **config)
         threading.Thread.__init__(self)
         
         self._info = queue.Queue()
@@ -247,19 +247,20 @@ class Database_Adv_Task_Loop(Database_Basic, threading.Thread):
     def Transaction(self):
         # setup
         print('Master: I am in')
+        print('\t cursor open')
         self.cursor = self.connection.cursor()
         try:
             yield
         # tear down
         except mysql.connector.Error as err:
-            print('rollback')
+            print('\t rollback')
             print(err)
             self.connection.rollback()
             self.cursor.close()
             self.cursor = None
         finally:
             if  self.cursor:
-                print('close cursor')
+                print('\t close cursor')
                 self.connection.commit()
                 self.cursor.close()
                 self.cursor = None
@@ -287,9 +288,9 @@ class Database_Adv_Task_Loop(Database_Basic, threading.Thread):
         
         while not self._input.empty() or not self._subjobs.empty():
             job = self._subjobs.get()
-            print('terminating: ' + job.name)
+            print('\t terminating: ' + job.name)
             job.join(timeout = 1)
-            print('terminated: '  + job.name)
+            print('\t terminated: '  + job.name)
         
         print('all jobs have been done')
         self.stoprequest.set()
@@ -348,10 +349,10 @@ class Database_Adv_Task_Loop(Database_Basic, threading.Thread):
     
     def taskCheck(self, task):
         if   task.name == 'mysqlerror':
-            print('master find an error event:' + task.error)
+            print('\t\t master find an error event:' + task.error)
             raise(task.error)
         elif task.name == 'insert': # insert, update, create
-            print('creating a thread for insert')
+            print('\t\t creating a thread for insert')
             self._subjobs.put( DBjob(
                                     self.conlock,
                                     self._info,
@@ -362,7 +363,7 @@ class Database_Adv_Task_Loop(Database_Basic, threading.Thread):
                                      )
                                 )
         elif task.name == 'query' : # select
-            print('creating a thread for query')
+            print('\t\t creating a thread for query')
             self._subjobs.put( DBjob(
                                      self.conlock,
                                      self._info,
@@ -425,4 +426,4 @@ class DBjob(threading.Thread):
         super(DBjob, self).join(timeout)
         print(self.name + ' join finished' + ',whose flag is : ' + self.stoprequest._flag.__str__() )     
 
-Database = Database_Basic        
+Database = DataBase       

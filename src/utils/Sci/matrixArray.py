@@ -79,7 +79,6 @@ class matrixArray(list):
                 self.col = 0
             elif numberOfargs == 1:           
                 if   isinstance(args[0], list):
-                    # if list is a py matirx
                     super(matrixArray, self).__init__()
                     self.list2Matrix(args[0])                  
                 elif True:
@@ -171,8 +170,6 @@ class matrixArray(list):
             pass
         
     def __setitem__(self, key, value):
-        
-        print("call set item", key)
         if   isinstance(key, tuple):
             if   key.__len__() == 1:
                 super(matrixArray, self).__setitem__(key[0], value)

@@ -36,7 +36,7 @@ ORDER BY timestamp_utc ASC
 import time
 
 if __name__ == '__main__':
-#     db = Database_Basic(**config['ERIconfig2'])
+#     db = DataBase(**config['ERIconfig2'])
 #     
 #     results = db.query(
 #              sql_query_template,
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 #     
 #     print(results)
     
-    db = Database_Adv_Task_Loop(**config['ERIconfig2'])
+    db = DBManager(**config['ERIconfig2'])
     
     db.register(
                 'query',
