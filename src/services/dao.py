@@ -37,8 +37,11 @@ class DataRetriever(object):
                               start_timestamp,
                               end_timestamp,
                               )
-            
-            # Call back routines
-            callback(datetime(*start_date), datetime(*end_date), series, *args, **keywords)
-            # for test purpose
-            break
+            try:
+                # Call back routines
+                callback(datetime(*start_date), datetime(*end_date), series, mid=mid)
+                # for test purpose
+                # break
+            except IndexError as err:
+                print('ERROR!:', entry, ' series : ', series.__len__() )
+                

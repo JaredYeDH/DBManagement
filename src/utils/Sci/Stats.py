@@ -17,7 +17,7 @@ def neuro_train(x, y, timeseries, name):
     mean_tar = tar.mean(axis=0)[0]
     std_tar = tar.std(axis=0)[0]
 
-    tar = (tar - mean_tar) / (1.5 * std_tar)
+    tar = (tar - mean_tar) / (2 * std_tar)
     
     inp2 = np.zeros(size)
     # add another feature
@@ -32,7 +32,14 @@ def neuro_train(x, y, timeseries, name):
     net = nl.net.newff([[0, 24], [0, 31], [0, 6], [0, 1]],[10, 10, 1])
     # Train network
     error = net.train(inp, tar, epochs=500, show=100, goal=0.02)
-    net.save('model_' + name)
+    
+    import os, stat
+    cwd = os.getcwd() 
+    sub_dir = cwd + '/training_models/neuro_network'
+    #os.chmod(sub_dir, stat.S_IWRITE)
+    filename = 'model_' + name
+    #net.save( os.path.join(sub_dir, filename) )
+    net.save( filename )
 
     # Plot result
     import pylab as pl
@@ -55,7 +62,7 @@ def neuro_validate(x, y, timeseries, name):
     mean_tar = tar.mean(axis=0)[0]
     std_tar = tar.std(axis=0)[0]
     
-    tar = (tar - mean_tar) / (1.5 * std_tar)
+    tar = (tar - mean_tar) / (2 * std_tar)
     
     # add another feature
     inp2 = np.zeros(size)
@@ -66,12 +73,18 @@ def neuro_validate(x, y, timeseries, name):
     inp2 = inp2.reshape(size,1)
     
     inp = np.concatenate((inp,inp2), axis=1)  
+
+    import os
+    cwd = os.getcwd() 
+    sub_dir = cwd + '/training_models/neuro_network'
+    filename = 'model_' + name 
+    #net = nl.load( os.path.join(sub_dir, filename) )
+    net = nl.load(filename)
     
-    net = nl.load('model' + name)
     # Simulate network
     out = net.sim(inp).reshape(size)
     
-    out = out * 1.5 * std_tar + mean_tar
+    out = out * 2 * std_tar + mean_tar
     
     # Plot result
     import pylab as pl
@@ -93,12 +106,52 @@ def neuro_predict(x0, y0, y, name):
     # data preprocessing
     mean_tar = tar.mean(axis=0)[0]
     std_tar = tar.std(axis=0)[0] 
-    
-    net = nl.load('model' + name)
+ 
+    import os
+    cwd = os.getcwd() 
+    sub_dir = cwd + '/training_models/neuro_network'
+    filename = 'model_' + name   
+    #net = nl.load( os.path.join(sub_dir, filename) )
+    net = nl.load(filename)
     
     out = net.sim(inp).reshape(size)
     
-    out = out * 1.5 * std_tar + mean_tar
+    out = out * 2 * std_tar + mean_tar
     
     return out
+ 
+ 
+def onTest(start_date, end_date, series, *args, **keywords):
+    from datetime import datetime
+    # -- importing sci computation package --
+    import pandas as R
+    import numpy as M
+    
+    # data prepareation
+    Y = []
+    X = []
+    timeseries = []
+    for entry in series:
+        param = datetime.utcfromtimestamp(entry['timestamp_utc'])
         
+        Y.append(entry['power_kw'])
+        X.append([
+                  param.hour,
+                  param.day,
+                  param.weekday(),
+                  ])
+        timeseries.append(param)   
+        
+    # train models
+    name = keywords['mid']
+    
+    x = M.array(X)
+    y = M.array(Y)
+    ## train model
+    neuro_train(x, y, timeseries, name)
+    ## validate model
+    neuro_validate(x, y, timeseries, name) 
+                       
+    
+    
+            
