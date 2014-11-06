@@ -189,6 +189,7 @@ class DataBase(Connector):
                     break
             list.append(dict)
         self._output.put(list)
+        print('\t\t transform ends')
     
     def __str__(self):
         return "Database_Basic"               

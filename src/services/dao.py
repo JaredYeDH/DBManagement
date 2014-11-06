@@ -13,7 +13,7 @@ class DataRetriever(object):
     def __init__(self):
         pass
     
-    def write_to_db(self, start_date, end_date, callback = None, *args, **keywords):
+    def read_BSM_series_from_db(self, start_date, end_date, callback = None, *args, **keywords):
         db = Database(**config['ERIconfig'])
         
     ##  get meters by id    
@@ -38,4 +38,7 @@ class DataRetriever(object):
                               end_timestamp,
                               )
             
+            # Call back routines
             callback(datetime(*start_date), datetime(*end_date), series, *args, **keywords)
+            # for test purpose
+            break

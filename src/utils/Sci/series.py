@@ -92,7 +92,7 @@ class SeriesNode(Node):
             
         self.startdatetime = startdatetime
         self.enddatetime = enddatetime
-        self.treeIndex = {'monthly':[], 'weekly':[], 'dayly':[], 'daytime':[], 'nighttime':[]} 
+        self.treeIndex = {'monthly':[], 'weekly':[], 'dayly':[], 'daytime':[], 'nighttime':[], 'hourly':[]} 
 
     def __iter__(self):
         return self.seriesIterator(self, 
@@ -123,11 +123,9 @@ class SeriesNode(Node):
         raise NotImplementedError() 
     
     def buildtree(self):
-        self.aggregate(self.up2down, self.left2right)
-        
-        return self
+        raise NotImplementedError()
     
-    def aggregate(self, *callback, **keywords):
+    def aggregate(self, obj, *callback, **keywords):
         it = self.__iter__()
         #elegant loop
         while True:
@@ -135,7 +133,7 @@ class SeriesNode(Node):
                 # get data
                 start, end, data = it.__next__()
                 # create a child
-                child = Week(start, end, data, 'dataframe', self.treeIndex)
+                child = obj(start, end, data, 'dataframe', self.treeIndex)
 
                 for call in callback:
                     call(self, 
@@ -193,10 +191,18 @@ class Month(SeriesNode):
     def __str__(self):
         return 'Month ' + self.id + ':'
     
+    def buildtree(self):
+        self.aggregate(Week, self.up2down, self.left2right)
+        
+        return self
+    
     # vertical grouping
     @staticmethod
     def up2down(self, child):
         self.add_child(child)
+        ## up2down
+        child.statistic()
+        child.buildtree()
     
     # horizontal groupign
     @staticmethod
@@ -213,9 +219,73 @@ class Week(SeriesNode):
             self.treeIndex = treeIndex
         
     def __str__(self):
-        return 'Week ' + self.id + ':'       
+        return 'Week ' + self.id + ':' 
+    
+    def buildtree(self):
+        self.aggregate(Day, self.up2down, self.left2right)
         
-def onTrigger(start_date, end_date, series, *args, **keywords):
+        return self    
+    
+    # vertical grouping
+    @staticmethod
+    def up2down(self, child):
+        self.add_child(child)
+        
+        ## up2down
+        child.statistic()
+        child.buildtree()
+    
+    # horizontal groupign
+    @staticmethod
+    def left2right(child, self):
+        self.treeIndex['dayly'].append(child)  
+        
+class Day(SeriesNode):
+    span = delta(hours=1)
+    
+    def __init__(self, startdatetime, enddatetime, data, type='json', treeIndex={}):
+        super(Day, self).__init__(startdatetime, enddatetime, data, type=type) 
+        
+        if  treeIndex != {}:
+            self.treeIndex = treeIndex
+            
+    def __str__(self):
+        return 'Day' + self.id + ':'
+    
+    def buildtree(self):
+        self.aggregate(Hour, self.up2down, self.left2right)
+        
+        return self 
+    
+    # vertical grouping
+    @staticmethod
+    def up2down(self, child):
+        self.add_child(child)
+        ## up2down
+        child.statistic()
+        ## uncomment the following line if it is not leaf ADS
+        #child.buildtree()
+    
+    # horizontal groupign
+    @staticmethod
+    def left2right(child, self):
+        self.treeIndex['hourly'].append(child)              
+
+class Hour(SeriesNode):
+    span = delta(hours=1)
+    
+    def __init__(self, startdatetime, enddatetime, data, type='json', treeIndex={}):
+        super(Hour, self).__init__(startdatetime, enddatetime, data, type=type) 
+        
+        if  treeIndex != {}:
+            self.treeIndex = treeIndex
+
+    def __str__(self):
+        return 'Hour' + self.id + ':'
+   
+## event trigger function 
+        
+def onTest(start_date, end_date, series, *args, **keywords):
     print('series-tree test: begin')
     seriesnode = SeriesNode(start_date, end_date, series)
     # test set up
@@ -228,8 +298,10 @@ def onTrigger(start_date, end_date, series, *args, **keywords):
           )
     # test build tree for month
     print('\t build hirarchical tree, begin ... ...')
-    Month(start_date, end_date, series).setup().buildtree().get_children()
+    Month(start_date, end_date, series).setup().buildtree()#.get_children()
     print('\t buld hirarchical tree, end!')
-    
+
+    # test leaf confi
+    Day(start_date, end_date, series).setup().buildtree().get_children()
     
     print('series-tree test: End')   

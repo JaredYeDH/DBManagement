@@ -5,13 +5,13 @@ Created on 3 Nov, 2014
 @author: wangyi
 '''
 from services.dao import DataRetriever
-from utils.Sci.series import onTrigger
+from utils.Sci.series import onTest
 
 if __name__ == '__main__':
     dr = DataRetriever()
     
-    dr.write_to_db(
+    dr.read_BSM_series_from_db(
                    (2014, 5, 26), 
                    (2014, 7, 28), 
-                   onTrigger,
+                   onTest,
                    ) 
