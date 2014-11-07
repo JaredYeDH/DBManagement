@@ -41,3 +41,71 @@ Methodology
 -----------
 1. sql template lexical parser : Finite Sates Machine
 2. database : basic event-loop and master-slaves architecture. Database shards system is just another wrap upon this model, which is very easy to use.
+
+
+Userful Sci Tool Test
+---------------------
+matrixArray:
+**-**-**normal matrix initialization testing**-**-**
+
+
+matrixArray(2,4)
+matrixArray:
+[ null      null      null      null 
+  null      null      null      null ]
+row vector matrixArray(1,4)
+matrixArray:
+[ null      null      null      null ]
+col vector matrixArray(4,1)
+matrixArray:
+[ null 
+  null 
+  null 
+  null ]
+
+
+**-**-**normal vector set value/get value testing**-**-**
+
+
+100
+101
+c[1]:  200
+c[0, 0, 0, 1]:  200
+d[1]:  201
+d[1, 0, 0, 0]:  201
+
+
+**-**-**normal matrix reset testing**-**-**
+
+
+mat after reset: mat([1,2,3,4,10,12]
+matrixArray:
+[ 1.00 
+  2.00 
+  3.00 
+  4.00 
+  10.00 
+  12.00 ]
+
+
+**-**-**normal vector set value/get value testing**-**-**
+
+
+mat Transpose
+matrixArray:
+[ 1.00      2.00      3.00      4.00      10.00     12.00 ]
+
+
+**-**-**R style new matirx initialization testing**-**-**
+
+
+matrixArray(3, 1, [1, 2, 3])
+matrixArray:
+[ 1.00 
+  2.00 
+  3.00 ]
+matrixArray(2, 3, [1, 2, 3, 4, 5, 6])
+matrixArray:
+[ 1.00      2.00      3.00 
+  4.00      5.00      6.00 ]
+

@@ -33,8 +33,9 @@ class matrixArray(list):
         def __iter__(self):
             return self
 
+        ## ! just for two dimensions now
         def __counter__(self):
-            size = self.matrixArray.shap()
+            size = self.matrixArray.shape()
             
             i = 0
             j = 0
@@ -103,30 +104,37 @@ class matrixArray(list):
                         q = it2.__next__()
                         self[p] = q                  
                     except StopIteration as e:
-                        break
-                
-                print('?')                                      
+                        break                                     
         elif True:
             pass
         
         
     def __str__(self):
-        print(self.__name__())
-        str = "["
+        str = self.name() + '\n' 
+        str = str + "["
         str = str + '{:1s}'.format(' ')
         
         # column vector
-        if   self.col == 1:
+        if  self.col == 1:
             for i in range(0, self.row):
-                str = str + '{:<.2f} '.format(self[i])
+                try:
+                    str = str + '{:<.2f} '.format(self[i])
+                except TypeError as e:
+                    str = str + '{:s}'.format('null ')
                 
-                if i + 1 < self.row:
+                if  i + 1 < self.row:
                     str = str + "\n  "
         # row vector
         elif self.row == 1:
             for j in range(0, self.col - 1):
-                str = str + '{:<10.2f}'.format(self[j])
-            str = str + '{:<.2f}'.format(self.col - 1)
+                try:
+                    str = str + '{:<10.2f}'.format(self[j])
+                except TypeError as e:
+                    str = str + '{:<10s}'.format('null')
+            try:
+                str = str + '{:<.2f}'.format(self[self.col - 1])
+            except TypeError as e:
+                str = str + '{:s}'.format('null')
             str = str + '{:1s}'.format(' ')
         # matrix
         elif True:        
@@ -137,14 +145,14 @@ class matrixArray(list):
                         try:
                             str = str + '{:<10.2f}'.format(self[i][j])#.format(super(matrixArray, self).__getitem__(i).__getitem__(j))
                         except TypeError as e:
-                            if   e.__str__() == 'non-empty format string passed to object.__format__':
+                            if  e.__str__() == 'non-empty format string passed to object.__format__':
                                 str = str + '{:10s}'.format('null')
                     elif True:
                         try:
                             str = str + '{:<.2f}'.format(self[i][j])#.format(super(matrixArray, self).__getitem__(i).__getitem__(j))
                             str = str + ' '
                         except TypeError as e:
-                            if   e.__str__() == 'non-empty format string passed to object.__format__':
+                            if  e.__str__() == 'non-empty format string passed to object.__format__':
                                 str = str + '{:s}'.format('null') 
                                 str = str + ' '                                   
                     
@@ -155,7 +163,7 @@ class matrixArray(list):
         str = str + "]"
         return str
     
-    def __name__(self):
+    def name(self):
         return "matrixArray:"
     
 #   @ConstructorAssign
@@ -170,15 +178,19 @@ class matrixArray(list):
             pass
         
     def __setitem__(self, key, value):
-        if   isinstance(key, tuple):
+        if   isinstance(key, tuple) or isinstance(key, list):
             if   key.__len__() == 1:
                 super(matrixArray, self).__setitem__(key[0], value)
             elif key.__len__() == 2:
-                try:               
-                    super(matrixArray, self).__getitem__(key[0]).__setitem__(key[1], value)#this method should not use this strategy#self[key[0]][key[1:]] = value #this function will call __getitem__() recursively
-                except:
-                    if  key[0] == 0:
-                        super(matrixArray, self).__setitem__(key[1], value)
+                if self.row == 1 and key[0] == 0:
+                    super(matrixArray, self).__setitem__(key[1], value)
+                    return
+                if self.col == 1 and key[1] == 0:
+                    super(matrixArray, self).__setitem__(key[0], value)
+                    return
+                              
+                super(matrixArray, self).__getitem__(key[0]).__setitem__(key[1], value)#this method should not use this strategy#self[key[0]][key[1:]] = value #this function will call __getitem__() recursively
+
             elif True:
                 len = key.__len__()
                 
@@ -207,13 +219,25 @@ class matrixArray(list):
                 try:
                     return self[key[0]][key[1:]]
                 except:
-                    flag = 1
-                    for item in key[1:]:
-                        if item != 0:
-                            flag = 0
-                            break
-                    if  flag == 1:
-                        return self[key[0]]
+                    # if column vector
+                    if  self.col == 1:
+                        flag = 1
+                        for item in key[1:]:
+                            if item != 0:
+                                flag = 0
+                                raise( TypeError("wrong index") )
+                        if  flag == 1:
+                            return self[key[0]]
+                        
+                    # if row vector
+                    if  self.row == 1:
+                        flag = 1
+                        for item in key[:key.__len__()-1 ]:
+                            if item != 0:
+                                flag = 0
+                                raise( TypeError("wrong index") )
+                        if flag == 1:
+                            return self[key[key.__len__()-1]]
         elif isinstance(key, list):
             if   key.__len__() == 0:
                 pass
@@ -295,7 +319,7 @@ class matrixArray(list):
                 self.append(None)  
     
     def shape(self):
-        return (self.row, self.col)
+        return {'row':self.row, 'col':self.col}#(self.row, self.col)
 
 ## for operation
     def __add__(self, object):
@@ -306,7 +330,8 @@ class matrixArray(list):
     @callNext
     def __gt__(self,  object):
         pass
- 
+
+## just for 2-D matrix 
 ## for linear algebra
     def transpose(self):
         mat = matrixArray(self.col, self.row) 
@@ -317,7 +342,7 @@ class matrixArray(list):
                 
         return mat
             
-            
+## just for 2-D matirx            
 ## for computation
 ##    
     def map(self, Func, *iterables):
@@ -339,34 +364,42 @@ T = 'transpose'
 _T_ = T
 
 if __name__ == '__main__':
+    print('\n\n**-**-**normal matrix initialization testing**-**-**\n\n')
     mat = matrixArray(2,4)
+    print('\t matrixArray(2,4)\n', mat)
     
-#     l = [1,2,3]
-#     list2matrixArray(l)
-#     print(mat)
-    
-#     mat = matrixArray(5,2)
-#     print(mat)
-#  
-#     mat(1,1)
-#     
-#     mat[0,1] = 500
-#     
-#     mat[0,1]
-#  
-#     print(mat)
-    
-    mat([1,2,3,4,10,12])
-    
-    t = 1
-    print(mat)
+    c = matrixArray(1,4)
+    print('\t row vector matrixArray(1,4)\n', c)
+    d = matrixArray(4,1)
+    print('\t col vector matrixArray(4,1)\n', d)
 
-    mat[0,0]
+    print('\n\n**-**-**normal vector set value/get value testing**-**-**\n\n')
+    c[1] = 100
+    print(c[1])
+    d[1] = 101
+    print(d[1])
     
-    print(mat-x>{T})
+    c[0, 1] = 200
+    print('c[1]: ', c[1])
+    print('c[0, 0, 0, 1]: ', c[0, 0, 0, 1])
     
+    d[1, 0] = 201
+    print('d[1]: ', d[1])
+    print('d[1, 0, 0, 0]: ', d[1, 0, 0, 0])
+    
+    print('\n\n**-**-**normal matrix reset testing**-**-**\n\n')
+    mat([1,2,3,4,10,12])
+    print('\t mat after reset: mat([1,2,3,4,10,12]\n', mat)
+    
+    print('\n\n**-**-**normal vector set value/get value testing**-**-**\n\n')
+    print('\t mat Transpose\n', mat-x>{T})
+    
+    print('\n\n**-**-**R style new matirx initialization testing**-**-**\n\n')
     a = matrixArray(3, 1, [1, 2, 3])
-    b = matrixArray(3, 1, [1, 2, 3])
+    print('\t matrixArray(3, 1, [1, 2, 3])\n', a)
+    b = matrixArray(2, 3, [1, 2, 3, 4, 5, 6])
+    print('\t matrixArray(2, 3, [1, 2, 3, 4, 5, 6])\n', b)
+    
     
     pass
     
