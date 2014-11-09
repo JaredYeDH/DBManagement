@@ -4,6 +4,8 @@ Created on 18 Sep, 2014
 
 PyMatrix implementation based on pure python oop charisma
 
+Description:
+
 @author: wangyi
 '''
 from copy import *
@@ -210,7 +212,7 @@ class matrixArray(list):
                 return matrixArray(result)# this method is bad
             elif True:
                 return result
-        elif isinstance(key, tuple):
+        elif isinstance(key, tuple) or isinstance(key, list):
             if   key.__len__() == 0:
                 pass
             elif key.__len__() == 1:
@@ -238,14 +240,6 @@ class matrixArray(list):
                                 raise( TypeError("wrong index") )
                         if flag == 1:
                             return self[key[key.__len__()-1]]
-        elif isinstance(key, list):
-            if   key.__len__() == 0:
-                pass
-            elif key.__len__() == 1:
-                return self[key[0]]
-            elif True:
-                return self[key[0]][key[1:]]
-                
         
     def __setattr__(self, name, value):
         if   isinstance(name, tuple):
@@ -322,11 +316,32 @@ class matrixArray(list):
         return {'row':self.row, 'col':self.col}#(self.row, self.col)
 
 ## for operation
+    def equal_size(self, object):
+        sizel = self.shape()
+        sizer = object.shape()
+        
+        if sizel['row'] != sizer['row']:
+            raise( TypeError('matrix size unmatched') )
+        if sizel['col'] != sizer['col']:
+            raise( TypeError('matrix size unmatched') )
+
+    def __neg__(self):
+        return self.map(neg)
+
+    @callNext
     def __add__(self, object):
-        pass
+        self.equal_size(object)
+        return self.map(add, object)
+    
     @callNext
     def __sub__(self, object):
-        pass
+        self.equal_size(object)
+        return self.map(sub, object)
+    
+    def __mul__(self, object):
+        self.tolerate(object)
+        return self.dot(object)
+    
     @callNext
     def __gt__(self,  object):
         pass
@@ -341,6 +356,30 @@ class matrixArray(list):
                 mat[i,j] = self[j,i]
                 
         return mat
+    
+    # test wether two matrix can tolerate each other
+    def tolerate(self, object):
+        sizel = self.shape()
+        sizer = object.shape()
+        
+        if  sizel['col'] == sizer['row']:
+            return
+        raise( TypeError("matrix does not tolerate to the object!") )
+    
+    def dot(self, object):
+        self.tolerate(object)
+        
+        mat = matrixArray(self.row, object.col)
+        
+        for i in range(mat.row):
+            for j in range(mat.col):
+                sum = 0.0
+                for k in range(self.col):
+                    sum += self[i,k] * object[k,j]
+                mat[i,j] = sum
+                
+        return mat
+        
             
 ## just for 2-D matirx            
 ## for computation
@@ -392,7 +431,7 @@ if __name__ == '__main__':
     print('\t mat after reset: mat([1,2,3,4,10,12]\n', mat)
     
     print('\n\n**-**-**normal vector set value/get value testing**-**-**\n\n')
-    print('\t mat Transpose\n', mat-x>{T})
+    print('\t mat Transpose, mat-x>{T}\n', mat-x>{T})
     
     print('\n\n**-**-**R style new matirx initialization testing**-**-**\n\n')
     a = matrixArray(3, 1, [1, 2, 3])
@@ -400,6 +439,15 @@ if __name__ == '__main__':
     b = matrixArray(2, 3, [1, 2, 3, 4, 5, 6])
     print('\t matrixArray(2, 3, [1, 2, 3, 4, 5, 6])\n', b)
     
+    
+    print('\n\n**-**-**numric matirx basic operation**-**-**\n\n')
+    print('\t a + b\n', a + a)
+    
+    print('\t a - a\n', a - a)
+    
+    print('\t -a \n', - a)
+    
+    print('\t b * a: 2 * 3 matrix multiply 3 * 1 vector or matrix \n', b * a )
     
     pass
     

@@ -9,7 +9,6 @@ Layout
         core->
             DAO->
                 sqlparser.py 
-Pending to be changed in the future, and will be wrapped in Class name space for ease of use
 
 This version is a powerful substitution for old sql template parser, which was developed as sql template lexical parsing tool under the influence of mysql-python-connector. Native Mysql-Python-Connector by MySQL is not elegent for string substitution, hence I decided to write my own. It is a little like PHP style. But the philosophy is different! I consider it as an alternitive to Object Relationship Mapping (ORM) like Django 'Model' in python or Hybernate framework in Java
 
@@ -45,9 +44,8 @@ Methodology
 
 Userful Sci Tool Test
 ---------------------
-matrixArray:
-**-**-**normal matrix initialization testing**-**-**
 
+###normal matrix initialization testing###
 
 matrixArray(2,4)
 matrixArray:
@@ -66,8 +64,7 @@ matrixArray:
       null 
       null ]
 
-
-**-**-**normal vector set value/get value testing**-**-**
+###normal vector set value/get value testing###
 
     100
     101
@@ -76,7 +73,7 @@ matrixArray:
     d[1]:  201
     d[1, 0, 0, 0]:  201
 
-**-**-**normal matrix reset testing**-**-**
+###normal matrix reset testing###
 
 mat after reset: mat([1,2,3,4,10,12]
 
@@ -88,16 +85,14 @@ mat after reset: mat([1,2,3,4,10,12]
       10.00 
       12.00 ]
 
-
-**-**-**normal vector set value/get value testing**-**-**
-
+###normal vector set value/get value testing###
 
 mat Transpose
 matrixArray:
 
     [ 1.00      2.00      3.00      4.00      10.00     12.00 ]
 
-**-**-**R style new matirx initialization testing**-**-**
+###R style new matirx initialization testing###
 
 matrixArray(3, 1, [1, 2, 3])
 matrixArray:
@@ -111,3 +106,35 @@ matrixArray:
     [ 1.00      2.00      3.00 
       4.00      5.00      6.00 ]
 
+###numric matirx basic operation###
+
+#####matrix add
+
+    a + b
+    matrixArray:
+    [ 2.00 
+      4.00 
+      6.00 ]
+
+#####matirx minus
+
+    a - a
+    matrixArray:
+    [ 0.00 
+      0.00 
+      0.00 ]
+
+#####matrix negtive 
+
+    -a 
+    matrixArray:
+    [ -1.00 
+      -2.00 
+      -3.00 ]
+
+#####matrix multiply
+
+    b * a: 2 * 3 matrix multiply 3 * 1 vector or matrix 
+    matrixArray:
+    [ 14.00 
+      32.00 ]
