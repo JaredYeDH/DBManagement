@@ -47,17 +47,19 @@ Userful Sci Tool Test
 
 ###normal matrix initialization testing###
 
-matrixArray(2,4)
-matrixArray:
+#####matrixArray(2,4)#####
+    matrixArray:
 
     [ null      null      null      null 
       null      null      null      null ]
-row vector matrixArray(1,4)
-matrixArray:
+#####row vector matrixArray(1,4)#####
+
+    matrixArray:
 
     [ null      null      null      null ]
-col vector matrixArray(4,1)
-matrixArray:
+#####col vector matrixArray(4,1)#####
+    
+    matrixArray:
 
     [ null 
       null 
@@ -65,6 +67,10 @@ matrixArray:
       null ]
 
 ###normal vector set value/get value testing###
+c[1] = 100, c = [1, 2, 3, 4]
+c[0, 0, 0, 1] = 200
+d[1] = 101, d = [1, 2, 3, 4]
+d[1, 0, 0, 0] = 201
 
     100
     101
@@ -75,7 +81,7 @@ matrixArray:
 
 ###normal matrix reset testing###
 
-mat after reset: mat([1,2,3,4,10,12]
+#####mat after reset: mat([1,2,3,4,10,12]#####
 
     matrixArray:
     [ 1.00 
@@ -87,28 +93,31 @@ mat after reset: mat([1,2,3,4,10,12]
 
 ###normal vector set value/get value testing###
 
-mat Transpose
-matrixArray:
+#####mat Transpose#####
+
+    matrixArray:
 
     [ 1.00      2.00      3.00      4.00      10.00     12.00 ]
 
 ###R style new matirx initialization testing###
 
-matrixArray(3, 1, [1, 2, 3])
-matrixArray:
+#####matrixArray(3, 1, [1, 2, 3])#####
+
+    matrixArray:
 
     [ 1.00 
       2.00 
       3.00 ]
-matrixArray(2, 3, [1, 2, 3, 4, 5, 6])
-matrixArray:
+#####matrixArray(2, 3, [1, 2, 3, 4, 5, 6])#####
+
+    matrixArray:
 
     [ 1.00      2.00      3.00 
       4.00      5.00      6.00 ]
 
 ###numric matirx basic operation###
 
-#####matrix add
+#####matrix add#####
 
     a + b
     matrixArray:
@@ -116,7 +125,7 @@ matrixArray:
       4.00 
       6.00 ]
 
-#####matirx minus
+#####matirx minus#####
 
     a - a
     matrixArray:
@@ -124,7 +133,7 @@ matrixArray:
       0.00 
       0.00 ]
 
-#####matrix negtive 
+#####matrix negtive##### 
 
     -a 
     matrixArray:
@@ -132,7 +141,7 @@ matrixArray:
       -2.00 
       -3.00 ]
 
-#####matrix multiply
+#####matrix multiply#####
 
     b * a: 2 * 3 matrix multiply 3 * 1 vector or matrix 
     matrixArray:
