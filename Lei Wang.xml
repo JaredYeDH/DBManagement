@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="true" context="org.python.pydev.editor.templates.python.modules" deleted="false" description="Module: Class" enabled="true" name="WangYi-Code-Class"># -*- coding: utf-8 -*-
+'''
+Created on ${date}
+
+@author: ${user}, Researcher Associate @ EIRAN, Nanyang Technological University
+
+@email: L.WANG@ntu.edu.sg
+
+@copyright:  ${year} ${organization_name}. All rights reserved.
+
+@license:    ${license}
+
+@decription:
+
+@param: ${current_method}
+'''
+${cursor}</template></templates>
