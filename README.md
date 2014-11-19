@@ -129,7 +129,7 @@ d[1, 0, 0, 0] = 201
       0.00 
       0.00 ]
 
-#####matrix negtive##### 
+#####matrix negtive#####
 
     -a 
     matrixArray:
