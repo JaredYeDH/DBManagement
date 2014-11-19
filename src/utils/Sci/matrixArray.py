@@ -11,6 +11,7 @@ Description:
 from copy import *
 from operator import *
 
+
 def callNext(Func):
     def NewFunc(*args, **key):
         if   args[1] == "sign":
@@ -23,10 +24,24 @@ def callNext(Func):
             return obj
     return NewFunc
 
+
 class matrixArray(list):
     '''
-    classdocs
-    '''          
+    Created on 15 Nov, 2014
+    
+    @author: wangyi, Researcher Associate @ EIRAN, Nanyang Technological University
+    
+    @email: L.WANG@ntu.edu.sg
+    
+    @copyright: 2014 www.yiak.co. All rights reserved.
+    
+    @license: license
+    
+    @decription:
+    
+    @param: 
+    '''
+
     class matrixIterator(object):
         def __init__(self, matrixArray):
             self.matrixArray = matrixArray
@@ -110,7 +125,9 @@ class matrixArray(list):
         elif True:
             pass
         
-        
+#===============================================================================
+# Matrix Array Representation: 
+#===============================================================================
     def __str__(self):
         str = self.name() + '\n' 
         str = str + "["
@@ -168,8 +185,6 @@ class matrixArray(list):
     def name(self):
         return "matrixArray:"
     
-#   @ConstructorAssign
-#   @matrixArray.__setitem__
     def __call__(self, l):
         if   isinstance(l, list):#return self[rid][cid]#super(matrixArray, self).__getitem__(rid).__getitem__(cid)   
             self.clear()
@@ -200,6 +215,7 @@ class matrixArray(list):
                 t = super(matrixArray, self).__getitem__(key[0])
                 while i < len - 1:
                     t = t[key[i]]
+                    i += 1
                 t.__setitem__(key[len-1], value)
                  
         elif isinstance(key, int):
@@ -212,12 +228,20 @@ class matrixArray(list):
                 return matrixArray(result)# this method is bad
             elif True:
                 return result
-        elif isinstance(key, tuple) or isinstance(key, list):
+        elif isinstance(key, slice):
+            start, stop, step = key.indices(len(self))
+            result = [super(matrixArray, self).__getitem__(i) for i in range(start, stop, step)] 
+            if   isinstance(result, list):
+                return matrixArray(result)
+            elif True:
+                return result           
+            
+        elif isinstance(key, tuple) or isinstance(key, list) :
             if   key.__len__() == 0:
                 pass
             elif key.__len__() == 1:
                 return self[key[0]] # call user defined
-            elif True:
+            elif key.__len__() >= 2:
                 try:
                     return self[key[0]][key[1:]]
                 except:
@@ -240,6 +264,8 @@ class matrixArray(list):
                                 raise( TypeError("wrong index") )
                         if flag == 1:
                             return self[key[key.__len__()-1]]
+            elif True:
+                raise TypeError("index must be int or slice")
         
     def __setattr__(self, name, value):
         if   isinstance(name, tuple):
@@ -277,7 +303,7 @@ class matrixArray(list):
         # by default we deem a one dimensional list as a column vector
         row = list.__len__()
         col = [None] * row
-        
+                
         for r in range(0, row):
             try:
                 col[r] = list[r].__len__()
@@ -288,8 +314,12 @@ class matrixArray(list):
             except AttributeError as e:
                 col[r] = 1
                 self.append(list[r])      
-            
-        if   max(col) == min(col):
+
+        if   list == []:
+            self.row = 0
+            self.col = 0
+           
+        elif max(col) == min(col):
             self.row = row
             self.col = min(col)
              
@@ -306,7 +336,7 @@ class matrixArray(list):
             row = [None] * self.col
             
             for r in range(0, self.row):
-    #           self.head[r] = deepcopy(row)
+#               self.head[r] = deepcopy(row)
                 super(matrixArray, self).append(deepcopy(row))
         elif self.row == 1:
             for i in range(0, self.col):
@@ -338,6 +368,7 @@ class matrixArray(list):
         self.equal_size(object)
         return self.map(sub, object)
     
+    @callNext
     def __mul__(self, object):
         self.tolerate(object)
         return self.dot(object)
@@ -403,7 +434,7 @@ T = 'transpose'
 _T_ = T
 
 if __name__ == '__main__':
-    print('\n\n**-**-**normal matrix initialization testing**-**-**\n\n')
+    print('\n\n**normal matrix initialization testing**\n\n')
     mat = matrixArray(2,4)
     print('\t matrixArray(2,4)\n', mat)
     
@@ -412,7 +443,7 @@ if __name__ == '__main__':
     d = matrixArray(4,1)
     print('\t col vector matrixArray(4,1)\n', d)
 
-    print('\n\n**-**-**normal vector set value/get value testing**-**-**\n\n')
+    print('\n\n**normal vector set value/get value testing**\n\n')
     c[1] = 100
     print(c[1])
     d[1] = 101
@@ -426,28 +457,30 @@ if __name__ == '__main__':
     print('d[1]: ', d[1])
     print('d[1, 0, 0, 0]: ', d[1, 0, 0, 0])
     
-    print('\n\n**-**-**normal matrix reset testing**-**-**\n\n')
+    print('\n\n**normal matrix reset testing**\n\n')
     mat([1,2,3,4,10,12])
     print('\t mat after reset: mat([1,2,3,4,10,12]\n', mat)
     
-    print('\n\n**-**-**normal vector set value/get value testing**-**-**\n\n')
+    print('\n\n**normal vector set value/get value testing**\n\n')
     print('\t mat Transpose, mat-x>{T}\n', mat-x>{T})
     
-    print('\n\n**-**-**R style new matirx initialization testing**-**-**\n\n')
+    print('\n\n**R style new matirx initialization testing**\n\n')
     a = matrixArray(3, 1, [1, 2, 3])
     print('\t matrixArray(3, 1, [1, 2, 3])\n', a)
     b = matrixArray(2, 3, [1, 2, 3, 4, 5, 6])
     print('\t matrixArray(2, 3, [1, 2, 3, 4, 5, 6])\n', b)
     
     
-    print('\n\n**-**-**numric matirx basic operation**-**-**\n\n')
+    print('\n\n**numric matirx basic operation testing**\n\n')
     print('\t a + b\n', a + a)
     
     print('\t a - a\n', a - a)
     
-    print('\t -a \n', - a)
+    print('\t -a   \n', - a)
     
-    print('\t b * a: 2 * 3 matrix multiply 3 * 1 vector or matrix \n', b * a )
+    print('\t b * a\n', b * a )
     
+    print('\n\n**matrix selector testing**\n\n')
+    print(b)
+    print(b[:,0])
     pass
-    

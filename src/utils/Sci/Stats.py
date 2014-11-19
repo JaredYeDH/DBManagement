@@ -4,6 +4,8 @@ Created on 30 Oct, 2014
 
 @author: wangyi
 '''
+## neuro net work
+
 def neuro_train(x, y, timeseries, name):
     import neurolab as nl
     import numpy as np

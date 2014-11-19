@@ -49,27 +49,26 @@ Userful Sci Tool Test
 
 #####matrixArray(2,4)#####
     matrixArray:
-
     [ null      null      null      null 
       null      null      null      null ]
 #####row vector matrixArray(1,4)#####
 
     matrixArray:
-
     [ null      null      null      null ]
 #####col vector matrixArray(4,1)#####
     
     matrixArray:
-
     [ null 
       null 
       null 
       null ]
 
 ###normal vector set value/get value testing###
-c[1] = 100, c = [1, 2, 3, 4]
-c[0, 0, 0, 1] = 200
-d[1] = 101, d = [1, 2, 3, 4]
+c[1] = 100,     
+c = [1, 2, 3, 4]    
+c[0, 0, 0, 1] = 200     
+d[1] = 101,     
+d = [1, 2, 3, 4]    
 d[1, 0, 0, 0] = 201
 
     100
@@ -96,7 +95,6 @@ d[1, 0, 0, 0] = 201
 #####mat Transpose#####
 
     matrixArray:
-
     [ 1.00      2.00      3.00      4.00      10.00     12.00 ]
 
 ###R style new matirx initialization testing###
@@ -104,14 +102,12 @@ d[1, 0, 0, 0] = 201
 #####matrixArray(3, 1, [1, 2, 3])#####
 
     matrixArray:
-
     [ 1.00 
       2.00 
       3.00 ]
 #####matrixArray(2, 3, [1, 2, 3, 4, 5, 6])#####
 
     matrixArray:
-
     [ 1.00      2.00      3.00 
       4.00      5.00      6.00 ]
 
@@ -119,7 +115,7 @@ d[1, 0, 0, 0] = 201
 
 #####matrix add#####
 
-    a + b
+    a + b   
     matrixArray:
     [ 2.00 
       4.00 

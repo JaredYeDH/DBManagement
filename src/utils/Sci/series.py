@@ -76,15 +76,13 @@ class SeriesNode(Node):
     
     def __init__(self, startdatetime, enddatetime, data, type='json'):
         if  type == 'json':
-            self.raw = DataFrame(data)
-            
-            self.data = DataFrame(data  = self.raw['power_kw'].tolist(),
-                                  columns = ['power_kw'],
-                                  index = to_datetime( 
-                                              self.raw['timestamp_utc'].astype(int),
-                                              unit='s'
-                                              ),
-                          )            
+            ## initialization       
+            self.data = DataFrame(data)
+            ## set index
+            self.data.set_index('timestamp_utc', inplace=True)
+            ## verbose
+            self.data.index = to_datetime(self.data.index.astype(int), unit='s')
+                      
         elif type == 'dataframe':
             self.data = data
         
@@ -107,19 +105,16 @@ class SeriesNode(Node):
         self.treeIndex['daytime'].clear()
         self.treeIndex['nighttime'].clear() 
         
-        self.id        = self.startdatetime.strftime("%Y%m%d%H%M")
-        self.date_time = self.startdatetime
-        
         return self
     
         # vertical grouping
     @staticmethod
-    def up2down(child, self):
+    def up2down(self, child):
         raise NotImplementedError()
     
     # horizontal groupign
     @staticmethod
-    def left2right(child, self):
+    def left2right(self, child):
         raise NotImplementedError() 
     
     def buildtree(self):
@@ -137,7 +132,7 @@ class SeriesNode(Node):
 
                 for call in callback:
                     call(self, 
-                         child.setup()
+                         child
                          )
                 
             except StopIteration as err:
@@ -186,7 +181,9 @@ class Month(SeriesNode):
         super(Month,self).__init__(startdatetime, enddatetime, data, type=type)
         
         if  treeIndex != {}:
-            self.treeIndex = treeIndex  
+            self.treeIndex = treeIndex 
+            
+        self.id = self.startdatetime.strftime("%y%m") 
         
     def __str__(self):
         return 'Month ' + self.id + ':'
@@ -206,7 +203,7 @@ class Month(SeriesNode):
     
     # horizontal groupign
     @staticmethod
-    def left2right(child, self):
+    def left2right(self, child):
         self.treeIndex['weekly'].append(child)        
 
 class Week(SeriesNode):
@@ -217,6 +214,8 @@ class Week(SeriesNode):
         
         if  treeIndex != {}:
             self.treeIndex = treeIndex
+            
+        self.id = self.startdatetime.strftime("%y%V")
         
     def __str__(self):
         return 'Week ' + self.id + ':' 
@@ -237,7 +236,7 @@ class Week(SeriesNode):
     
     # horizontal groupign
     @staticmethod
-    def left2right(child, self):
+    def left2right(self, child):
         self.treeIndex['dayly'].append(child)  
         
 class Day(SeriesNode):
@@ -249,8 +248,10 @@ class Day(SeriesNode):
         if  treeIndex != {}:
             self.treeIndex = treeIndex
             
+        self.id = self.startdatetime.strftime("%y%m%d")
+            
     def __str__(self):
-        return 'Day' + self.id + ':'
+        return 'Day ' + self.id + ':'
     
     def buildtree(self):
         self.aggregate(Hour, self.up2down, self.left2right)
@@ -268,7 +269,7 @@ class Day(SeriesNode):
     
     # horizontal groupign
     @staticmethod
-    def left2right(child, self):
+    def left2right(self, child):
         self.treeIndex['hourly'].append(child)              
 
 class Hour(SeriesNode):
@@ -279,9 +280,44 @@ class Hour(SeriesNode):
         
         if  treeIndex != {}:
             self.treeIndex = treeIndex
+            
+        self.id = self.startdatetime.strftime("%y%m%d%H")
 
     def __str__(self):
-        return 'Hour' + self.id + ':'
+        return 'Hour ' + self.id + ':'
+
+## -- extension nodes --
+class Weeks(SeriesNode):
+    span = delta(weeks = 1)
+    
+    def __init__(self, startdatetime, enddatetime, data, type='json', treeIndex={}):
+        super(Weeks,self).__init__(startdatetime, enddatetime, data, type=type)
+        
+        if  treeIndex != {}:
+            self.treeIndex = treeIndex 
+            
+        self.id = self.startdatetime.strftime("%y%V") + "-" + self.enddatetime.strftime("%y%V") 
+        
+    def __str__(self):
+        return 'Weeks from ' + self.startdatetime.strftime("%Y%m%d%H%M") + ' to ' + self.enddatetime.strftime("%Y%m%d%H%M") + ":" 
+    
+    def buildtree(self):
+        self.aggregate(Week, self.up2down, self.left2right)
+        
+        return self
+    
+    # vertical grouping
+    @staticmethod
+    def up2down(self, child):
+        self.add_child(child)
+        ## up2down
+        child.statistic()
+        child.buildtree()
+    
+    # horizontal groupign
+    @staticmethod
+    def left2right(self, child):
+        self.treeIndex['weekly'].append(child)     
    
 ## event trigger function 
         

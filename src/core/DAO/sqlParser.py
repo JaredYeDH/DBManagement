@@ -4,6 +4,21 @@ Created on 17 Oct, 2014
 
 @author: wangyi
 '''
+import re
+
+# date, datetime, time
+DATE_PATTERN = re.compile("\b*(?P<date>\d{1,2}[-/:]\d{1,2}[-/:]\d{4})\b*")
+TIME_PATTERN = re.compile("\b*(?P<time>\d{2}:\d{2}:\d{2})\b*")
+DtTm_PATTERN = re.compile("\b*(?P<dttm>\d{1,2}[-/:]\d{1,2}[-/:]\d{4} *: *\d{2}:\d{2}:\d{2})\b*")
+
+# keywords
+KyVd_PATTERN = re.compile("\b*'(?P<key>[^']+)' *: *'?(?P<value>[^']+)'?\b*")
+
+# values
+VaLe_PATTERN = re.compile("\b*'?(?P<value>[^']+)'?\b*")
+
+DELIMITER = (',')  
+
 class SQLparser(object):
     
     def __init__(self, sql_str, *args_str, **hint_str):
@@ -18,46 +33,111 @@ class SQLparser(object):
         
         self.operant_dict = {}
         self.operant_list = []
-        
+ 
     def load_data(self, data_str):
-        # temp term
+        
+        # timp term
+        id = 0
         key = ""
-        word = ""    
+        word = ""
         value = ""
-        i = 0
-    
+        
         while True:
+            # read all words
             try:
+                # read a word, delimited by ','
                 while True:
-                    if   data_str[i] == ',':
-                        i += 1
+                    if  data_str[id] == ',':
+                        id += 1
                         break
-                    elif data_str[i] == ':':
-                        key = word
-                        word = ""
-                        i += 1
-                    elif data_str[i] == "'" or data_str[i] == ' ' or data_str[i] == "\t":
-                        i += 1
-                        continue
-                    elif True:
-                        word += data_str[i]
-                        i += 1
+                    else:
+                        word += data_str[id]
+                        id +=1
+                        
+                # identify the datatype:
                 
-                if   key != "":
-                    value = word
-                    self.operant_dict[key] = value
-                elif True:
-                    self.operant_list.append(word)
-    
-                word = ""
+                # key value -- 
+                match = re.search(KyVd_PATTERN, word)
+                if match:
+                    k = match.group('key')
+                    v = match.group('value') 
+                    self.operant_dict[k] = v
+                    word = ""
+                
+                # normal value
+                match = re.search(VaLe_PATTERN, word)
+                if match:
+                    v = match.group('value')
+                    self.operant_list.append(v)
+                    word = ""
             except IndexError as e:
-                if   key != "":
-                    value = word
-                    self.operant_dict[key] = value
-                elif True:
-                    self.operant_list.append(word)
-                       
-                break    
+                match = re.search(KyVd_PATTERN, word)
+                if match:
+                    k = match.group('key')
+                    v = match.group('value') 
+                    self.operant_dict[k] = v
+                    word = ""
+                
+                match = re.search(VaLe_PATTERN, word)
+                if match:
+                    v = match.group('value')
+                    self.operant_list.append(v)
+                    word = ""                
+                
+                break
+                          
+#     def load_data(self, data_str):
+#         
+#         # temp term
+#         key = ""
+#         word = ""    
+#         value = ""
+#         i = 0
+#     
+#         while True:
+#             try:
+#                 while True:
+#                     if   data_str[i] == ',':
+#                         i += 1
+#                         break
+#                     elif data_str[i] == ':': # datetime
+#                         key = word
+#                         word = ""
+#                         i += 1
+#                     elif data_str[i] == "'" :
+#                         # if I want to read
+#                         # if I dont want to read
+#                         i += 1
+#                         continue                       
+#                     elif data_str[i] == ' ': # datetime
+#                         # if I want to read
+#                         # if I dont want to read
+#                         i += 1
+#                         continue
+#                     elif data_str[i] == "\t":
+#                         # if I want to read       
+#                         # if I dont want to read
+#                         i += 1
+#                         continue
+#                     elif True:
+#                         word += data_str[i]
+#                         i += 1
+#                 
+#                 if   key != "":
+#                     value = word
+#                     self.operant_dict[key] = value
+#                 elif True:
+#                     self.operant_list.append(word)
+#     
+#                 word = ""
+#             except IndexError as e:
+#                 if   key != "":
+#                     value = word
+#                     self.operant_dict[key] = value
+#                 elif True:
+#                     self.operant_list.append(word)
+#                        
+#                 break    
 
     def stackloop(self, sign_in, sign_out, data_str):
         # counter
@@ -115,7 +195,14 @@ class SQLparser(object):
                     try:
                         value = self.operant_dict.pop(key)
                     except:
-                        raise TypeError('not all arguments converted during string formatting')
+                        # error - 1
+                        # raise TypeError('not all arguments converted during string formatting')
+                        # try list
+                        try:
+                            value = self.operant_list.pop()
+                        except:
+                            # cannot handle error - 1
+                            raise TypeError('not all arguments converted during string formatting')
                         
                     succ = sql[j + k + 2:]
                     sql = pre + value + succ

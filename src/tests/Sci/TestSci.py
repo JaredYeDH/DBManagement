@@ -38,7 +38,7 @@ class TestSci(object):
 
 if __name__ == '__main__':
     # Test stats
-    TestSci().test_stats()
+    ##TestSci().test_stats()
     
     # Test series
     TestSci().test_series()

@@ -65,15 +65,18 @@ WHERE table_schema = '%s' AND
                                                     charset='utf8'
                                                     )
         else:
-            self.connection=mysql.connector.connect(**config)
-
             self.db     = config['db']
             self.host   = config['host']
             self.user   = config['user']
             self.passwd = config['passwd']
             self.charset= config['charset']
             
-    def set_connector(self):
+            if self.db != '':
+                self.connection=mysql.connector.connect(**config)
+            if self.db == '':
+                pass
+            
+    def set_connector(self, db=''):
         
         raise NotImplementedError()
         
@@ -94,9 +97,8 @@ WHERE table_schema = '%s' AND
         except mysql.connector.Error as err:
             print(err)
             self.connection.rollback()
-            self.cursor.close()
-            self.cursor = None
         finally:
+            self.connection.commit()
             self.cursor.close()
             self.cursor = None    
     # This method can be safe
@@ -114,6 +116,18 @@ class DataBase(Connector):
         super(DataBase, self).__init__(**config)
         
         self._output = queue.Queue()
+    
+    def set_connector(self, db=''):
+        self.db = db
+        
+        if  self.connection:
+            self.connection.close()
+        self.connection=mysql.connector.connect(host=self.host,  
+                                                user=self.user,  
+                                                passwd=self.passwd,  
+                                                db=self.db,
+                                                charset='utf8'
+                                                )
         
     def basic(self, sql_str, callback, *args, **hint):
         

@@ -32,8 +32,8 @@ if __name__ == '__main__':
     sqls = SQLparser(
                      sql_insert_template,
                      'shard#1',
-                     [{'time':'2008-09-01', 'value':'101', 'ubds':'1000', 'peakmax':'2000', 'peakmin':'500'}, 
-                      {'time':'2010-09-01', 'value':'303', 'ubds':'1000', 'peakmax':'1500', 'peakmin':'200'}],
+                     [{'time':'2008-09-01 00:11:22', 'value':'101', 'ubds':'1000', 'peakmax':'2000', 'peakmin':'500'}, 
+                      {'time':'2010-09-01 00:11:22', 'value':'303', 'ubds':'1000', 'peakmax':'1500', 'peakmin':'200'}],
                      ).begin()
               
     for sql in sqls:
