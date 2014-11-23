@@ -19,9 +19,9 @@ class TestMatBase(object):
         pass
     
     def test_NMatirx(self):
-        from utils.Sci.matrixArray import matrixArray
+        from utils.Sci.matrixArray2 import matrixArrayBase
         
-        a = matrixArray(3, 1, [1, 2, 3, 4])
+        a = matrixArrayBase(3, 1, [1, 2, 3, 4])
         
         print(a)
         

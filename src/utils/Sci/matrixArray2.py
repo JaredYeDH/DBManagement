@@ -325,7 +325,7 @@ class matrixArrayBase(list):
                 return result
         elif isinstance(key, slice):
             start, stop, step = key.indices(len(self))
-            results = [ matrixArrayBase( super(matrixArrayBase, self).__getitem__(i) ) for i in range(start, stop, step)] 
+            results = [ matrixArrayBase( self(i) ) for i in range(start, stop, step)] 
 
             return results
             
@@ -453,6 +453,22 @@ class matrixArrayBase(list):
                     break 
         
         return self
+    
+    def nil(self, r, c):
+        super(matrixArrayBase, self).clear()          
+#       self.head = [None] * self.row
+        if   r > 1:
+            row = [None] * c
+            
+            for r in range(0, r):
+#               self.head[r] = deepcopy(row)
+                super(matrixArrayBase, self).append(deepcopy(row))
+        elif r == 1:
+            for i in range(0, c):
+                self.append(None)  
+                
+    def Zeors(self):
+        pass 
         
 class matrixArray(matrixArrayBase):
     '''
