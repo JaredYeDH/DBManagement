@@ -66,6 +66,12 @@ class TestMatBase(object):
     def test_set_data(self):
         from utils.Sci.matrixArray2 import matrixArrayBase
         
+        a = matrixArrayBase()
+        
+        a[1,1] = 100
+        
+        print(a)
+        
         b = matrixArrayBase(
                             [
                              [[1,2], [3, 4], [5, 6]], 
@@ -83,6 +89,10 @@ class TestMatBase(object):
     def test_get_data(self):
         from utils.Sci.matrixArray2 import matrixArrayBase
         
+        a = matrixArrayBase()
+        
+        a[1000]
+        
         b = matrixArrayBase(
                             [
                              [[1,2], [3, 4], [5, 6]], 
@@ -91,7 +101,8 @@ class TestMatBase(object):
                             ]
                             )       
         
-        print(b[0,0,3])
+        print(b[1,:])
+        print(b[:,1])
             
     def test_iteration_2(self):
         from utils.Sci.matrixArray2 import matrixArrayBase
@@ -122,5 +133,39 @@ class TestMatBase(object):
     def test_selector_set_data(self):
         pass    
 
+    
+    def test_matrix2list(self):
+        from utils.Sci.matrixArray2 import matrixArrayBase
+        
+        a = matrixArrayBase(
+                            [
+                             [1,2],
+                             [3,4]
+                             ]
+                            )
+        
+        print(a)
+
+        list(a)
+        
+    def test_Union(self):
+        from utils.Sci.matrixArray2 import matrixArrayBase, Union
+        
+        a = matrixArrayBase([
+                         [1, 2],
+                         [3, 4]
+                         ])
+        print(a)
+        
+        b = matrixArrayBase([
+                         [11, 22],
+                         [33, 44]
+                         ])
+        print(b)
+        
+        m = Union(a, b)
+       
+        print(m)  
+        
 if __name__ == "__main__":
-    TestMatBase().test_set_data()
+    TestMatBase().test_Union()

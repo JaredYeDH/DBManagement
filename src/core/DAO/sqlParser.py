@@ -6,6 +6,11 @@ Created on 17 Oct, 2014
 '''
 import re
 
+# work in the future
+
+# 1. for two json version input, we will backup the lates. Currently can just support one nested data, it will be changed in the future 
+# 2. deal with {:} substitution
+# 3. support more data type examination
 # date, datetime, time
 DATE_PATTERN = re.compile("\b*(?P<date>\d{1,2}[-/:]\d{1,2}[-/:]\d{4})\b*")
 TIME_PATTERN = re.compile("\b*(?P<time>\d{2}:\d{2}:\d{2})\b*")
@@ -84,60 +89,7 @@ class SQLparser(object):
                     self.operant_list.append(v)
                     word = ""                
                 
-                break
-                          
-#     def load_data(self, data_str):
-#         
-#         # temp term
-#         key = ""
-#         word = ""    
-#         value = ""
-#         i = 0
-#     
-#         while True:
-#             try:
-#                 while True:
-#                     if   data_str[i] == ',':
-#                         i += 1
-#                         break
-#                     elif data_str[i] == ':': # datetime
-#                         key = word
-#                         word = ""
-#                         i += 1
-#                     elif data_str[i] == "'" :
-#                         # if I want to read
-#                         # if I dont want to read
-#                         i += 1
-#                         continue                       
-#                     elif data_str[i] == ' ': # datetime
-#                         # if I want to read
-#                         # if I dont want to read
-#                         i += 1
-#                         continue
-#                     elif data_str[i] == "\t":
-#                         # if I want to read       
-#                         # if I dont want to read
-#                         i += 1
-#                         continue
-#                     elif True:
-#                         word += data_str[i]
-#                         i += 1
-#                 
-#                 if   key != "":
-#                     value = word
-#                     self.operant_dict[key] = value
-#                 elif True:
-#                     self.operant_list.append(word)
-#     
-#                 word = ""
-#             except IndexError as e:
-#                 if   key != "":
-#                     value = word
-#                     self.operant_dict[key] = value
-#                 elif True:
-#                     self.operant_list.append(word)
-#                        
-#                 break    
+                break  
 
     def stackloop(self, sign_in, sign_out, data_str):
         # counter
@@ -166,6 +118,7 @@ class SQLparser(object):
         return i + 1, words
 
     def sqlParser(self, sql):
+        s = False
         j = 0
          
         while True:
@@ -195,6 +148,15 @@ class SQLparser(object):
                     try:
                         value = self.operant_dict.pop(key)
                     except:
+                        if  self.hint != {}:
+                            try:
+                                if  self.hint['auto_debug'] == False:
+                                    s = True
+                                    j = j + 1
+                                    continue
+                            except Exception as e:
+                                pass 
+                        
                         # error - 1
                         # raise TypeError('not all arguments converted during string formatting')
                         # try list
@@ -231,13 +193,62 @@ class SQLparser(object):
                 
             except IndexError as e:
                 # since this layer just process one row data, so
+                if  s == True:
+                    e = TypeError('not all arguments converted during string formatting')
+                    e.sql = sql
+                    raise(e) 
+                
                 self.sql_clist.append(sql)
                 break 
             except TypeError as e:
                 e.sql = sql
-                raise(e)    
+                raise(e)   
+
+    # non-recursive version, thread stack safe
+    def dataParser2(self, data_str, sql_str):
+        stack = []
+        
+        stack.append( (data_str, sql_str) )
+        
+        while True:
+            try:
+                data_str, sql_str = stack.pop(0)
+                
+                if   data_str == '':
+                    pass   
+                
+                elif data_str[0] == '[':
+                    self.operate_stack.append('[')         
+        
+                    index, words = self.stackloop('[', ']', data_str)
+                    
+                    # load one row data: words = 'x,y'        
+                    stack.append( (words, sql_str) )
+                    stack.append( (data_str[index:], sql_str) )
+                               
+                elif data_str[0] == '{':
+                    self.operate_stack.append('{')
+        
+                    # To do get all data splited by ',' between '{ }' into stack             
+                    index, words = self.stackloop('{', '}', data_str)
+                    
+                    stack.append( (words, sql_str) )
+                    stack.append( (data_str[index:], sql_str) )
+                
+                elif data_str[0] == ',' or data_str[0] == ' ' or data_str[0] == '\t':
+                    stack.append( (data_str[1:], sql_str) )
+                
+                elif True:
+                    self.load_data(data_str)
+                    self.sqlParser(sql_str)                
+                
+            except IndexError as e:
+                break
+            except TypeError as e:
+                raise(e)
 
     # main entry
+    # recursive version, not thread stack safe if the number of records is too large
     def dataParser(self, data_str, sql_str):
     
         try:
@@ -245,8 +256,7 @@ class SQLparser(object):
                 pass   
             
             elif data_str[0] == '[':
-                self.operate_stack.append('[')
-                
+                self.operate_stack.append('[')         
     
                 index, words = self.stackloop('[', ']', data_str)
                 
@@ -276,12 +286,17 @@ class SQLparser(object):
     
     # main loop    
     def begin(self):
+        # in the future I wil change it to str dump version
         if  self.args == ():
             return [self.sql_str]
+        if  self.hint == {}:
+            # examine mode
+            pass
         for data in self.args:
             try:
-                self.dataParser(data.__str__(), self.sql_str)
+                self.dataParser2(data.__str__(), self.sql_str)
             except TypeError as e:
+                # for two json version input, we will backup the latest version by non-nested data substitution 
                 self.backup.append(self.sql_str)
                 self.sql_str = e.sql
                 

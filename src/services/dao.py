@@ -12,12 +12,10 @@ import queue
 
 message = queue.Queue()
 
-class Task(object):
+class job(object):
     
-    def __init__(self, id, name, data = None, *args, **hint):
-        self.id = id
-        self.name = name
-        self.data = data
+    def __init__(self, *args, **hint):
+        
         self.args = args
         self.hint = hint
 
@@ -27,11 +25,29 @@ class DataRetriever(object):
         self.message = message
     
     
-    def read_datetime_ranges_from_db(self, callback=None, *args, **keywords):
+    def read_typical_week_from_db(self, mid):
+        db = Database(db = 'ict_data_tran', **configx['ERIconfig'])
+        
+        tpw = db.query(SQL_TEMPLATES['SELECT']['ict_typcial_week_template'],
+                 mid)
+        
+        return tpw
+  
+    
+    def read_meter_from_db(self):
         db = Database(**config['ERIconfig'])
+        
+        MIDs = db.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_MID_QUERY_TEMPLATE'])
+        
+        return MIDs
+        
+
+    def read_datetime_ranges_from_db(self, callback=None):
+        db_hdata = Database(**config['ERIconfig'])
+        db_ict   = Database(db='ict_data_tran', **configx['ERIconfig'])
     
     ## get meters by id
-        MIDs = db.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_MID_QUERY_TEMPLATE'])
+        MIDs = db_hdata.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_MID_QUERY_TEMPLATE'])
         
     ## set up querying range 
         from datetime import date, datetime
@@ -40,14 +56,19 @@ class DataRetriever(object):
         for entry in MIDs:
             mid = entry['global_MID']
             
-            ranges = db.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_MID_FATCH_TEMPLATE'],
-                              'ntu_scada_hdata_mirror.ntu_scada_hdata_historic_mirror',
-                              mid
-                              )
-            max_datetime = datetime.fromtimestamp( max(ranges) )
-            min_datetime = datetime.fromtimestamp( min(ranges) )
+            ranges = db_hdata.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_TIMESTAMPS_FETCH_TEMPLATE'],
+                                    {'tb_col':'power_kw','db_table':'ntu_scada_hdata_historic_mirror','global_MID':mid}
+                                    )
+        
+            twpdta = db_ict.query(SQL_TEMPLATES['SELECT']['ict_typcial_week_template'], mid)
             
-            callback(max_datetime, min_datetime, ranges, mid=mid, message=self.message, taskFac=Task  )
+            try:
+                # callback routine
+                callback(ranges, twpdta, mid, self.message, job)
+                # for test purpose
+                # break
+            except Exception as inst:
+                print(inst)
 
 
     def read_BSM_series_from_db(self, start_date, end_date, callback = None, *args, **keywords):
@@ -76,7 +97,7 @@ class DataRetriever(object):
                               )
             try:
                 # Call back routines
-                callback(datetime(*start_date), datetime(*end_date), series, mid=mid, message=self.message, taskFac=Task)
+                callback(datetime(*start_date), datetime(*end_date), series, mid, self.message, job)
                 # for test purpose
                 # break
             except IndexError as err:
@@ -90,19 +111,44 @@ class DataPusher(object):
     def __init__(self):
         self.message = message
          
-    def write_BMS_analysis_2_db(self, callback = None, *args, **keywords):
+    def write_BMS_analysis_2_db(self, callback = None):
+        db = Database(db = 'ict_data_tran', **configx['ERIconfig']) 
+        
         while True:
             try:
-                task = self.message.get(block=False)
+                # get task
+                job  = self.message.get(block=False)
                 
-                id   = task.id
-                name = task.name
-                data = task.data
-                args = task.args
-                hint = task.hint
+                args = job.args
+                hint = job.hint
                 
                 # data converter gateway
-                callback(id, name, data, args, hint)
+                callback(args, hint)
                 
+                # run db routine
+                db.insert(SQL_TEMPLATES['INSERT']['ERI_BMS_TYPICAL_WEEK'],
+                          *args,
+                          **hint
+                          )
+            except queue.Empty:
+                break
+            
+    def write_ict_missdata_2_db(self, callback = None):
+        db = Database(db = 'ict_data_tran', **configx['ERIconfig']) 
+        while True:
+            try:
+                job  = self.message.get(block=False)
+
+                args = job.args
+                hint = job.hint
+                
+                # data converter gateway
+                callback(args, hint)
+                
+                # run db routine        
+                db.insert(SQL_TEMPLATES['UPDATE']['ict_BMS_data_clean'],
+                          *args,
+                          **hint)
+                         
             except queue.Empty:
                 break

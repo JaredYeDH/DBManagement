@@ -96,15 +96,14 @@ class TypicalWeek(Weeks):
         self.typicalWeek["Sat"][0] = self.typicalWeek["Sat"][0] / self.typicalWeek["Sat"][1] 
         self.typicalWeek["Sun"][0] = self.typicalWeek["Sun"][0] / self.typicalWeek["Sun"][1]  
     
+    
+        self.indexes = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24']
         return self
 ## event trigger function 
 
-def onTest_read(start_date, end_date, series, *args, **keywords):
+def onTest_read(start_date, end_date, series, mid, message, job):
     
     ids, tw = TypicalWeek(start_date, end_date, series).setup().buildtree().buildTypicalWeek().getTypicalWeek()
-    mid = keywords['mid']
-    message = keywords['message']
-    taskFac = keywords['taskFac']
     
     id_pre = start_date.strftime("%y%V") + end_date.strftime("%y%V")
     id_suc = mid[-3:]
@@ -127,29 +126,27 @@ def onTest_read(start_date, end_date, series, *args, **keywords):
         dict['values'] = records
         data.append(dict)  
     
-    message.put( taskFac(
-                        None, 
-                        'BMS_typical_week_by_meter', 
-                        data,
-                        start=start_date,
-                        end=end_date,
-                        mid=mid,  
-                        ) )
+    message.put( job( 
+                    start_date,
+                    end_date,
+                    mid,
+                    data  
+                    ) )
     
-def onTest_write(id, name, data, args, hint):
-    from core.DAO.Database import Database
-    from utils.jsonConfig import config, configx, SQL_TEMPLATES
-     
-    start = hint['start']
-    end   = hint['end']
-    pm_id = hint['mid']
+def onTest_write(args, hint):
     
-    db = Database(db = 'ict_data_tran', **configx['ERIconfig'])
-    
-    for record in data:   
-        db.insert(SQL_TEMPLATES['INSERT']['ERI_BMS_TYPICAL_WEEK'], 
-                  start,
-                  end,
-                  pm_id,
-                  record['weekday'],
-                  record['values'])
+    pass    
+# the following codes have been deprecated     
+# def onTest_write(start, end, pm_id, data):   
+#     from core.DAO.Database import Database
+#     from utils.jsonConfig import config, configx, SQL_TEMPLATES
+#     
+#     db = Database(db = 'ict_data_tran', **configx['ERIconfig'])
+#     
+#     for record in data:   
+#         db.insert(SQL_TEMPLATES['INSERT']['ERI_BMS_TYPICAL_WEEK'], 
+#                   start,
+#                   end,
+#                   pm_id,
+#                   record['weekday'],
+#                   record['values'])

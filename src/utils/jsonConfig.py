@@ -110,6 +110,27 @@ FROM %(db_table)s
 WHERE global_MID = '%(global_MID)s'
 ORDER BY timestamp_utc ASC
 """,
+
+    'ict_typcial_week_template':"""
+SELECT * FROM ict_data_tran.pm_hdada_typ_week
+WHERE pm_id = '%s';    
+"""
     },
-               
+
+
+## -- update --##
+    'UPDATE':{
+              
+    'ict_BMS_data_clean':"""
+
+SET SQL_SAFE_UPDATES=0;
+UPDATE `ict_data_tran`.`pm_hdata_tpy_clean`
+SET
+`power_kw` = %(pwk)s,
+`remarks` = 'modified'
+WHERE 
+`timestamp_utc` = TIMESTAMP('%(tt)s', '09:00:00') AND
+`global_MID` = '%s';  
+"""          
+              }               
 }

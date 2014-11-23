@@ -11,7 +11,6 @@ Description:
 from copy import *
 from operator import *
 
-
 def enhance(Func):
     def NewFunc(*args, **key):
         if   args[1] == "sign":
@@ -23,6 +22,42 @@ def enhance(Func):
             obj = Func(*args, **key)
             return obj
     return NewFunc
+
+def Union(*Mats):
+    
+    def Union2Mat(Matl, Matr):
+        
+        if  isinstance(Matl, matrixArrayBase) and isinstance(Matr, matrixArrayBase):
+            sizel = Matl.get_shape_array()
+            sizer = Matr.get_shape_array()
+
+            for i in range(0, max(sizel[0],sizer[0])):
+                r = Matl[i]
+                if   r != None:
+                    # see documentation for difference between () and []
+                    Matl(i,   Matr[i])
+                    
+                elif r == None:
+                    # do assignment
+                    Matl[i] = Matr[i]
+    
+    # create an empty matrix            
+    mat = matrixArrayBase()
+    
+    # loop
+    for obj in Mats:
+        Union2Mat(mat, obj)
+    
+    return mat
+
+def Intersection():
+    pass
+
+def rowTtf():
+    pass
+
+def colTtf():
+    pass
 
 class matrixArrayBase(list):
     '''
@@ -46,27 +81,54 @@ class matrixArrayBase(list):
         
         numberOfargs = len(args)
         if   numberOfargs == 0:
-            super(matrixArrayBase, self).__init__()
-        elif numberOfargs == 1:
-            if   isinstance(args[0], list):
-                super(matrixArrayBase, self).__init__(
-                                                      args[0]
-                                                      )
-            elif isinstance(args[0], int):
+            if   hint == {}:
+                pass
+            # no element specified
+            elif hint != {}:
+                # set up empty matrix
+                # no, row, col or dimensions
                 super(matrixArrayBase, self).__init__()
-            elif True:
-                raise TypeError(" ! " )
+             
+        elif numberOfargs == 1:
+            if   isinstance(args[0], int):
+                # create square null matrix
+                # just for 2-D cases
+                # what is about 3-D?
+                super(matrixArrayBase, self).__init__()
+                # To do: specify n * n null matirx
+            elif isinstance(args[0], list):
+                # copy or convert
+                super(matrixArrayBase, self).__init__(args[0])        
+                 
         elif numberOfargs == 2:
-            if  isinstance(args[0], int) and isinstance(args[1], int):
+            if   isinstance(args[0], int) and isinstance(args[1], int):
                 super(matrixArrayBase, self).__init__()    
-            
-        elif numberOfargs == 3:
-            if  isinstance(args[0], list):
-                if  isinstance(args[1], int) and isinstance(args[2], int):    
-                    super(matrixArrayBase, self).__init__(
-                                                          args[0]
-                                                          )                
-            
+                # To do: specify m * n null matrix
+                 
+                 
+            elif isinstance(args[0], int) and isinstance(args[1], list):
+                super(matrixArrayBase, self).__init__()
+                # To do: specify n * n null matrix
+ 
+                 
+        elif numberOfargs >= 3:
+            for i in range( 0, len(args) ):
+                if not isinstance(args[i], int):
+                    break
+ 
+            if  i == 0 and isinstance(args[  0  ], list):
+                # To do: matrix cantenation
+                super(matrixArrayBase, list).__init__()
+                pass
+                
+                  
+            if  i != 0 and isinstance(args[i + 1], list):
+                # To do: specify 
+                super(matrixArrayBase, list).__init__()
+                self.fillUp(args[i+1:])
+                pass
+
+                     
         self.shape()
     
     class matrixIterator(object):
@@ -79,7 +141,7 @@ class matrixArrayBase(list):
 
         ## ! just for two dimensions for the moment
         def __counter__(self):
-            size = self.matrixArray.shape()
+            size = self.matrixArray.get_shape_array()
 
             tier = len(size)
             iter = tier * [0]
@@ -129,7 +191,7 @@ class matrixArrayBase(list):
                 raise StopIteration()
             
     def name(self):
-        return "matrixArray:"
+        return "matrixArrayBase:"
     
     def shape(self):
         dems = self.get_shape_array()
@@ -151,20 +213,19 @@ class matrixArrayBase(list):
             self.col = dems[1]
             return dems
     
-    def __call__(self, l):
-        if   isinstance(l, list):#return self[rid][cid]#super(matrixArray, self).__getitem__(rid).__getitem__(cid)   
-            self.clear()
-            return self.list2Matrix(l)
-        elif isinstance(l, tuple):
-            self.clear()
-            return self.list2Matrix(l)
-            pass
+    def __call__(self, key, value=None):
+        if   value == None:
+            return super(matrixArrayBase, self).__getitem__(key)
+        elif value != None:
+            self(key).extend(value)
+            return self
         
     def __setitem__(self, key, value):   
         # currently set method doesn't support selector     
         if   isinstance(key, int):
             while True:
                 try:
+                    # old method
                     super(matrixArrayBase, self).__setitem__(key, value)
                     break  
                 except Exception as inst:
@@ -182,7 +243,19 @@ class matrixArrayBase(list):
                     self[key[0]] = value
                     return
                 # get list
-                t = super(matrixArrayBase, self).__getitem__(key[0])
+                while True:
+                    try:
+                        # old method
+                        t = super(matrixArrayBase, self).__getitem__(key[0])
+                        break
+                    except IndexError as e:
+                        print(e)
+                        self.append(None)
+                    
+                if  t == None:
+                    t  = []
+                    super(matrixArrayBase, self).__setitem__(key[0], t)
+                
                 while True:
                     try:
                         t[key[1]] = value
@@ -195,14 +268,40 @@ class matrixArrayBase(list):
                 l = len(key) 
                 # iteration part
                 i = 1
-                t = super(matrixArrayBase, self).__getitem__(key[0])
+                
+                while True:
+                    try:
+                        # old method
+                        t = super(matrixArrayBase, self).__getitem__(key[0])
+                        break
+                    except IndexError as e:
+                        print(e)
+                        self.append(None)
+                    
+                if  t == None:
+                    t  = []
+                    super(matrixArrayBase, self).__setitem__(key[0], t)
+                
                 while i < l - 1:
-                    t = t[key[i]]
+                    while True:
+                        try:
+                            s = t
+                            t = s[key[i]]
+                            break
+                        except IndexError as e:
+                            print(e)
+                            s.append(None)
+                    
+                    if  t == None:
+                        t = []
+                        s[key[i]] = t
+                    
                     i += 1
                 # get list
                 while True:
                     try:
                         t[key[l-1]] = value
+                        # do not need to process error
                         break
                     except Exception as inst:
                         print(inst)
@@ -215,7 +314,11 @@ class matrixArrayBase(list):
         
     def __getitem__(self, key):
         if   isinstance(key, int):
-            result = super(matrixArrayBase, self).__getitem__(key)#how can we get sub matrixArray, i.e. mat is result : True
+            try:
+                result = super(matrixArrayBase, self).__getitem__(key)#how can we get sub matrixArray, i.e. mat is result : True
+            except IndexError as e:
+                print(e)
+                return None
             if   isinstance(result, list):                
                 return matrixArrayBase(result)# this method is bad
             elif True:
@@ -228,7 +331,7 @@ class matrixArrayBase(list):
             
         elif isinstance(key, tuple) or isinstance(key, list) :
             if   key.__len__() == 0:
-                pass
+                return self
             elif key.__len__() == 1:
                 return self[key[0]] # call user defined
             elif key.__len__() >= 2:
@@ -241,7 +344,7 @@ class matrixArrayBase(list):
                     elif isinstance(key[0], slice):
                         results = self[key[0]]
                         # in the future, I will change it to canecation matrix
-                        results = [Mat[key[1:]] for Mat in results]
+                        results = [ Mat[key[1:]] for Mat in results]
                         return matrixArrayBase(results)
                 except Exception as inst:
                     # if column vector                          
@@ -327,13 +430,29 @@ class matrixArrayBase(list):
         
         return dems    
     
-    def list2Matrix(self, l):
+    def setUp(self, l=None):
         # clearn up
         self.clear()
         # set up container values
         self.extend(l)
         # modify shape accordingly
+
+    def fillUp(self, *iterators):
+        obj = self
         
+        for itx in iterators:
+            itl = obj.__iter__()
+            itr = itx.__iter__()
+            while True:
+                try:
+                    p = itl.nextIndex()
+                    q = itr.__next__()
+                    # use redefined method
+                    obj[p] = q                  
+                except StopIteration as e:
+                    break 
+        
+        return self
         
 class matrixArray(matrixArrayBase):
     '''
@@ -356,47 +475,8 @@ class matrixArray(matrixArrayBase):
         '''
         Constructor
         '''
-#       super(matrixArray, self).__init__()
+        super(matrixArray, self).__init__()
         
-        self.row = None
-        self.col = None
-         
-        if   args != None:
-    
-            numberOfargs = len(args)
-            if   numberOfargs == 0:
-                super(matrixArray, self).__init__()            
-                self.row = 0
-                self.col = 0
-            elif numberOfargs == 1:           
-                if   isinstance(args[0], list):
-                    super(matrixArray, self).__init__()
-                    self.list2Matrix(args[0])                  
-                elif True:
-                    self.col = self.r = args[0]
-                    super(matrixArray, self).__init__() 
-                    self.nullNMatrix()        
-            elif numberOfargs == 2:
-                self.row = args[0]
-                self.col = args[1]
-                super(matrixArray, self).__init__()                
-                self.nullNMatrix()              
-            elif True:
-                self.row = args[0]
-                self.col = args[1]
-                self.nullNMatrix()
-                
-                it = self.__iter__()
-                it2= args[2].__iter__()
-                while True:
-                    try:
-                        p = it.nextIndex()
-                        q = it2.__next__()
-                        self[p] = q                  
-                    except StopIteration as e:
-                        break                                     
-        elif True:
-            pass
         
 #===============================================================================
 # 2 - D Matrix Array Representation: 
@@ -462,75 +542,6 @@ class matrixArray(matrixArrayBase):
     
     def name(self):
         return "matrixArray:"
-    
- ## initialization       
-    def list2Matrix2(self, list):    
-        # Assume list is a two dimensional matrix
-        # by default we deem a one dimensional list as a column vector
-        row = list.__len__()
-        col = [None] * row
-        
-        for r in range(0, row):
-            try:
-                col[r] = list[r].__len__()
-            except AttributeError as e:
-                col[r] = 1
-        if   max(col) == min(col):
-            self.row = row
-            self.col = min(col)
-             
-        elif True:
-            self.row = row
-            self.col = max(col)                
-        
-                
-# This function is element wise referenced not list wise referenced, hence deprecated    
-    def list2Matrix(self, list):
-        # Assume list is a two dimensional matrix
-        # by default we deem a one dimensional list as a column vector
-        row = list.__len__()
-        col = [None] * row
-                
-        for r in range(0, row):
-            try:
-                col[r] = list[r].__len__()
-                self.append([])
-                for c in range(0,col[r]):
-                    self[r].append(list[r][c])#self[r][c] = list[r][c]
-                    
-            except AttributeError as e:
-                col[r] = 1
-                self.append(list[r])      
-
-        if   list == []:
-            self.row = 0
-            self.col = 0
-           
-        elif max(col) == min(col):
-            self.row = row
-            self.col = min(col)
-             
-        elif True:
-            self.row = row
-            self.col = max(col)
-              
-            #To Do: fill empty elements
-                   
-    def nullNMatrix(self):
-        super(matrixArray, self).clear()          
-#       self.head = [None] * self.row
-        if   self.row > 1:
-            row = [None] * self.col
-            
-            for r in range(0, self.row):
-#               self.head[r] = deepcopy(row)
-                super(matrixArray, self).append(deepcopy(row))
-        elif self.row == 1:
-            for i in range(0, self.col):
-                self.append(None)  
-    
-    def shape(self):
-        return {'row':self.row, 'col':self.col}#(self.row, self.col)
 
 ## for operation
     def equal_size(self, object):

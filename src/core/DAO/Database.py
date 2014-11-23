@@ -136,9 +136,12 @@ class DataBase(Connector):
                          **hint
                          ).begin()
         
+        i = 0
         with self.Cursor():
             for sql in sqls:
                 callback(sql)
+                i += 1
+                print(i)
                 
     def onQuery(self, sql):
         print('\t query begins')
@@ -153,7 +156,10 @@ class DataBase(Connector):
         print('\t query ends')
     
     def onAlter(self, sql):
-        self.cursor.execute(sql)
+        sqls = sql.strip().split(';')
+        for sql in sqls:
+            if  sql != '':
+                self.cursor.execute(sql)
 
 ## -- interface for user --    
     def query(self, sql, *args, **hint):
@@ -173,13 +179,15 @@ class DataBase(Connector):
             return list         
     
     def insert(self, sql, *args, **hint):
-        if hint != {}:
-            sql_query_table = self.sqlMapping['query']['_?_table']
-            
-            status = self.query(sql_query_table, hint['table'], hint['db'])
-                
-            if not status:
-                self.onAlter(hint['create'], hint['table'])    
+        if  hint != {}:
+            # db sharding mode 
+            try:        
+                status = self.query(self.sqlMapping['query']['_?_table'], hint['db'], hint['table'])
+                    
+                if  not status:
+                    self.onAlter(hint['create'], hint['table']) 
+            except Exception as e:
+                pass   
          
         self.basic(sql, self.onAlter, *args, **hint)       
 
@@ -436,7 +444,7 @@ class DBjob(threading.Thread):
                 break
     
     def join(self, timeout = None):
-        print(self.name + ' join begins' +',whose flag is : ' + self.stoprequest._flag.__str__() )
+        print(self.name + ' join begins'   + ',whose flag is : ' + self.stoprequest._flag.__str__() )
         self.stoprequest.set()
         super(DBjob, self).join(timeout)
         print(self.name + ' join finished' + ',whose flag is : ' + self.stoprequest._flag.__str__() )     
