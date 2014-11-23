@@ -104,12 +104,13 @@ class matrixArrayBase(list):
             if   isinstance(args[0], int) and isinstance(args[1], int):
                 super(matrixArrayBase, self).__init__()    
                 # To do: specify m * n null matrix
+                self.nil(args[0], args[1])
                  
                  
             elif isinstance(args[0], int) and isinstance(args[1], list):
                 super(matrixArrayBase, self).__init__()
                 # To do: specify n * n null matrix
- 
+                self.nil(args[0], args[0])
                  
         elif numberOfargs >= 3:
             for i in range( 0, len(args) ):
