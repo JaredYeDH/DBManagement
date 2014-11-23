@@ -119,14 +119,13 @@ class matrixArrayBase(list):
             if  i == 0 and isinstance(args[  0  ], list):
                 # To do: matrix cantenation
                 super(matrixArrayBase, list).__init__()
-                pass
                 
-                  
+                self = Union(*args) 
+                                  
             if  i != 0 and isinstance(args[i + 1], list):
                 # To do: specify 
                 super(matrixArrayBase, list).__init__()
                 self.fillUp(args[i+1:])
-                pass
 
                      
         self.shape()
@@ -487,11 +486,11 @@ class matrixArray(matrixArrayBase):
     @param: 
     '''
     
-    def __init__(self, *args):
+    def __init__(self, *args, **hint):
         '''
         Constructor
         '''
-        super(matrixArray, self).__init__()
+        super(matrixArray, self).__init__(*args, **hint)
         
         
 #===============================================================================
