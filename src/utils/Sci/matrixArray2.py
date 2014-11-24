@@ -229,7 +229,7 @@ class matrixArrayBase(list):
                     super(matrixArrayBase, self).__setitem__(key, value)
                     break  
                 except Exception as inst:
-                    print(inst)
+                    print(key, inst, 'set')
                     self.append(None)
                 
         elif isinstance(key, tuple) or isinstance(key, list):
@@ -249,7 +249,7 @@ class matrixArrayBase(list):
                         t = super(matrixArrayBase, self).__getitem__(key[0])
                         break
                     except IndexError as e:
-                        print(e)
+                        print(key[0], e, 'set')
                         self.append(None)
                     
                 if  t == None:
@@ -261,7 +261,7 @@ class matrixArrayBase(list):
                         t[key[1]] = value
                         break
                     except Exception as inst:
-                        print(inst)
+                        print(key[1], inst, 'set')
                         t.append(None)
 #               self[key[0]][key[1]] = value              
             elif len(key) >= 3:
@@ -275,7 +275,7 @@ class matrixArrayBase(list):
                         t = super(matrixArrayBase, self).__getitem__(key[0])
                         break
                     except IndexError as e:
-                        print(e)
+                        print(key[0], e, 'set')
                         self.append(None)
                     
                 if  t == None:
@@ -289,7 +289,7 @@ class matrixArrayBase(list):
                             t = s[key[i]]
                             break
                         except IndexError as e:
-                            print(e)
+                            print(key[i], e, 'set')
                             s.append(None)
                     
                     if  t == None:
@@ -317,7 +317,7 @@ class matrixArrayBase(list):
             try:
                 result = super(matrixArrayBase, self).__getitem__(key)#how can we get sub matrixArray, i.e. mat is result : True
             except IndexError as e:
-                print(e)
+                print(key, e, 'get')
                 return None
             if   isinstance(result, list):                
                 return matrixArrayBase(result)# this method is bad
@@ -325,9 +325,19 @@ class matrixArrayBase(list):
                 return result
         elif isinstance(key, slice):
             start, stop, step = key.indices(len(self))
-            results = [ matrixArrayBase( self(i) ) for i in range(start, stop, step)] 
+            
+            results = []
+            
+            for i in range(start, stop, step):
+                results.append(self(i)) 
 
-            return results
+            return matrixArrayBase(results)
+#                 if   isinstance( self(i), int ):
+#                     results.append( self(i) )
+#                 elif isinstance( self(i), list):
+#                     results.append( matrixArrayBase(self(i)) )
+                 
+#           results = [ matrixArrayBase( self(i) ) for i in range(start, stop, step)]         
             
         elif isinstance(key, tuple) or isinstance(key, list) :
             if   key.__len__() == 0:
@@ -342,9 +352,25 @@ class matrixArrayBase(list):
                         # I would like to change it in the future to support logic vecotrs like matlab, honestly speaking this is the very cool characteristics in matlab
                         return self[key[0]][key[1:]]
                     elif isinstance(key[0], slice):
+                        
                         results = self[key[0]]
                         # in the future, I will change it to canecation matrix
-                        results = [ Mat[key[1:]] for Mat in results]
+                        l = len(results)
+                        
+                        tmarray = []
+                        
+                        for i in range(0, l):
+                            tmarray.append(results[i][key[1:]])
+#                         
+#                         for obj in results:
+#                             if   isinstance( obj, int ):
+#                                 tmarray.append( obj )
+#                             elif isinstance( obj, list):
+#                                 tmarray.append( obj[key[1:]] )
+# #                       results = [ Mat[key[1:]] for Mat in results ]
+# 
+                        results = tmarray
+                         
                         return matrixArrayBase(results)
                 except Exception as inst:
                     # if column vector                          

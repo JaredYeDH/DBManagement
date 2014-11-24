@@ -120,6 +120,15 @@ class TestMatBase(object):
     def test_selector_get_data(self):
         from utils.Sci.matrixArray2 import matrixArrayBase
         
+        a = matrixArrayBase(
+                    [
+                     [1,2],
+                     [3,4]
+                     ]
+                    )
+        
+        print(a[1,:])
+        
         b = matrixArrayBase(
                             [
                              [[1,2], [3, 4], [5, 6]], 
@@ -168,4 +177,4 @@ class TestMatBase(object):
         print(m)  
         
 if __name__ == "__main__":
-    TestMatBase().test_Union()
+    TestMatBase().test_selector_get_data()
