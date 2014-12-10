@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 '''
 Created on 18 Sep, 2014
 
@@ -6,8 +7,13 @@ PyMatrix implementation based on pure python oop charisma
 
 Description:
 
-@author: wangyi
+@author: WANG LEI / YI, Research Associate @ NTU
+
+@emial: L.WANG@ntu.edu.sg, Nanyang Technologcial University
+
+@licence: licence
 '''
+
 from copy import *
 from operator import *
 
@@ -110,7 +116,24 @@ def detector(*args, **key):
 # operations between matrix
 #===============================================================================
 def Union(*Mats):
+    '''
+    Created on 10 Dec, 2014
     
+    @author: wangyi, Researcher Associate @ EIRAN, Nanyang Technological University
+    
+    @email: L.WANG@ntu.edu.sg
+    
+    @copyright: 2014 www.yiak.co. All rights reserved.
+    
+    @license: license
+    
+    @param: 
+    
+    @decription:
+    
+    @param: Union
+    '''
+
     def Union2Mat(Matl, Matr):
         
         if  isinstance(Matl, matrixArrayBase) and isinstance(Matr, matrixArrayBase):
@@ -353,20 +376,27 @@ class matrixArrayBase(list):
             return {'row':self.row, 'col':self.col}
         if len(shp) == 1:
             if  self.shp:
-                if   self.shp[0] == 1 and self.shp[1] != 1:
-                    self.row = 1
-                    self.col = shp[0]
-                elif self.shp[0] != 1 and self.shp[1] == 1:
-                    self.row = shp[0]
-                    self.col = 1
-                elif self.shp[0] == 1 and self.shp[1] == 1:
-                    self.row = 1
-                    self.col = 1
-                    
-                    return self.shp
-                
-            self.row = shp[0]
-            self.col = 1
+                try:
+                    if   self.shp[0] == 1 and self.shp[1] != 1:
+                        self.row = 1
+                        self.col = shp[0]
+                    elif self.shp[0] != 1 and self.shp[1] == 1:
+                        self.row = shp[0]
+                        self.col = 1
+                    elif self.shp[0] == 1 and self.shp[1] == 1:
+                        self.row = 1
+                        self.col = 1
+                        
+                        return self.shp
+                except Exception as e:
+                    if  self.shp == None:
+                        pass
+                    else:
+                        self.row = 1
+                        self.col = shp[0]
+            else:    
+                self.row = shp[0]
+                self.col = 1
             
             return {'row':self.row, 'col':self.col}
         if len(shp) == 2:
@@ -721,6 +751,7 @@ class matrixArrayBase(list):
             self.nil(r, 0)
         else:
             self.nil(r, c, 0) 
+
         
 class matrixArray(matrixArrayBase):
     '''
@@ -928,6 +959,13 @@ class matrixArray(matrixArrayBase):
     
     def dot(self, object):
         self.tolerate(object)
+        
+        if  self.row == 1 and object.col == 1:
+            sum = 0.0
+            for k in range(self.col):
+                sum += self[0,k] * object[k,0]
+            
+            return sum
         
         mat = matrixArray(self.row, object.col)
         

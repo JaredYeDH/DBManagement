@@ -4,6 +4,33 @@ Created on 17 Nov, 2014
 
 @author: wangyi
 '''
+class TestMat(object):
+    
+    def __init_(self):
+        pass
+    
+    def test_transpose(self):
+        from utils.Sci.matrixArray import matrixArray
+        
+        a = matrixArray([1,0,0])
+        
+        b = a.transpose()
+        
+        c = b * a
+        
+        print( c )
+        
+        print( b.size() )        
+    
+    def test_multi(self):
+        from utils.Sci.matrixArray import matrixArray
+        
+        a = matrixArray([1,0,0])
+        b = matrixArray([[1,2,3],[3,4,5]])
+
+        c = b * a
+        
+        print(c)
 
 class TestMatBase(object):
     
@@ -177,4 +204,5 @@ class TestMatBase(object):
         print(m)  
         
 if __name__ == "__main__":
-    TestMatBase().test_selector_get_data()
+    # TestMatBase().test_selector_get_data()
+    TestMat().test_transpose()
