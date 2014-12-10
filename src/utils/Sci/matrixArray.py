@@ -940,7 +940,7 @@ class matrixArray(matrixArrayBase):
                 
         return mat
       
-    def lvDec(self):
+    def svdDec(self):
         pass
     
     def __div__(self, obj):
