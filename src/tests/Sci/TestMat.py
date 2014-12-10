@@ -14,19 +14,19 @@ class TestMatBase(object):
         pass
     
     def test_list2Mat(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         pass
     
     def test_NMatirx(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         a = matrixArrayBase(3, 1, [1, 2, 3, 4])
         
         print(a)
         
     def test_get_shape_array(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         b = matrixArrayBase(
                             [
@@ -43,7 +43,7 @@ class TestMatBase(object):
         print(c)
         
     def test_iteration_1(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         b = matrixArrayBase(
                             [
@@ -64,7 +64,7 @@ class TestMatBase(object):
                 break
     
     def test_set_data(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         a = matrixArrayBase()
         
@@ -87,7 +87,7 @@ class TestMatBase(object):
         print(b)        
     
     def test_get_data(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         a = matrixArrayBase()
         
@@ -105,7 +105,7 @@ class TestMatBase(object):
         print(b[:,1])
             
     def test_iteration_2(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         b = matrixArrayBase(
                             [
@@ -118,7 +118,7 @@ class TestMatBase(object):
             print(e)        
             
     def test_selector_get_data(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         a = matrixArrayBase(
                     [
@@ -144,7 +144,7 @@ class TestMatBase(object):
 
     
     def test_matrix2list(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase
+        from utils.Sci.matrixArray import matrixArrayBase
         
         a = matrixArrayBase(
                             [
@@ -158,7 +158,7 @@ class TestMatBase(object):
         list(a)
         
     def test_Union(self):
-        from utils.Sci.matrixArray2 import matrixArrayBase, Union
+        from utils.Sci.matrixArray import matrixArrayBase, Union
         
         a = matrixArrayBase([
                          [1, 2],
