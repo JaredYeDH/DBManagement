@@ -18,6 +18,8 @@ class TestMat(object):
         
         c = b * a
         
+        b[1,0] = 2
+        
         print( c )
         
         print( b.size() )        

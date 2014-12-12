@@ -26,7 +26,7 @@ class DataRetriever(object):
     
     
     def read_typical_week_from_db(self, mid):
-        db = Database(db = 'ict_data_tran', **configx['ERIconfig'])
+        db  = Database(db = 'ict_data_tran', **configx['ERIconfig'])
         
         tpw = db.query(SQL_TEMPLATES['SELECT']['ict_typcial_week_template'],
                  mid)
@@ -35,7 +35,7 @@ class DataRetriever(object):
   
     
     def read_meter_from_db(self):
-        db = Database(**config['ERIconfig'])
+        db   = Database(**config['ERIconfig'])
         
         MIDs = db.query(SQL_TEMPLATES['SELECT']['BMS_SCANDA_MID_QUERY_TEMPLATE'])
         
