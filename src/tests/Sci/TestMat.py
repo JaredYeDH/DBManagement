@@ -20,6 +20,9 @@ class TestMat(object):
         
         b[1,0] = 2
         
+        print(b[:,0])
+        print(b[:,1])
+    
         print( c )
         
         print( b.size() )        

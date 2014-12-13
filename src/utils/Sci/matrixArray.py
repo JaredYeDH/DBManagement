@@ -282,14 +282,20 @@ class matrixArrayBase(list):
             if  self.shp:
                 try:
                     if   self.shp[0] == 1 and self.shp[1] and self.shp[1] != 1:
+                        
                         self.row = 1
                         self.col = size[0]
+                        
                     elif self.shp[0] != 1 and self.shp[1] and self.shp[1] == 1:
+                        
                         self.row = size[0]
                         self.col = 1
+                        
                     elif self.shp[0] == 1 and self.shp[1] and self.shp[1] == 1:
+                        
                         self.row = 1
                         self.col = 1
+                        
                 except Exception as e:
                     if  self.shp == None:
                         pass
@@ -377,7 +383,19 @@ class matrixArrayBase(list):
                 self.data = size
             
             def __getattribute__(self, name):
-                pass
+                try:
+                    return object.__getattribute__(self, name)
+                except:
+                    if  name == 'row':
+                        try:
+                            return self.data['row']
+                        except:
+                            return self.data[0]
+                    if  name == 'col':
+                        try:
+                            return self.data['col']
+                        except:
+                            return self.data[1]
                 
             def __str__(self):
                 shp = self.data
@@ -387,6 +405,7 @@ class matrixArrayBase(list):
                     return "raw shape: {0}".format( str(shp) ) 
                     
         shp = self.shape()
+        
         return Size(shp)
 #         if  isinstance(shp, dict):
 #             return "row:{row}, col:{col}".format( **shp )
@@ -431,8 +450,10 @@ class matrixArrayBase(list):
             
             return {'row':self.row, 'col':self.col}
         if len(shp) == 2:
+            
             self.row = shp[0]
             self.col = shp[1]
+            
             return {'row':self.row, 'col':self.col}
         
         # return result
@@ -451,7 +472,8 @@ class matrixArrayBase(list):
     # [[]] corresbonding to 1-demension row vector
     # [[x],[y], ... ] corresponding to 1-demension col vector
     #===================================================================
-    def __setitem__(self, key, value):   
+    def __setitem__(self, key, value): 
+        size = self.get_shape_array()[0:-1]  
         # currently set method doesn't support selector     
         if   isinstance(key, int):
             while True:
@@ -467,11 +489,12 @@ class matrixArrayBase(list):
         elif isinstance(key, tuple) or isinstance(key, list):
             if   key.__len__() == 1:
                 self[key[0]] = value
-            elif key.__len__() == 2:  
-                if  self.row == 1 and key[0] == 0:
+            elif key.__len__() == 2: 
+                 
+                if  self.row == 1 and key[0] == 0 and len(size) != 2:
                     self[key[1]] = value
                     return
-                if  self.col == 1 and key[1] == 0:
+                if  self.col == 1 and key[1] == 0 and len(size) != 2:
                     self[key[0]] = value
                     return
                 # get list
@@ -488,7 +511,7 @@ class matrixArrayBase(list):
                 # test codes for vector cases
                 if  not isinstance(t, matrixArrayBase) and not isinstance(t, list) and t != None:
                     # for col vector cases:
-                    if  self.col == 1:
+                    if  self.row != 1:
                         t = [t]
                         self(key[0], t)
                     # for row vector cases:
@@ -511,7 +534,10 @@ class matrixArrayBase(list):
                     except Exception as inst:
                         if  self.debug == True:
                             print(key[1], inst, 'set')
-                        t.append(None)
+                        try:
+                            t.append(None)
+                        except Exception as e:
+                            pass
 #               self[key[0]][key[1]] = value              
             elif len(key) >= 3:
                 l = len(key) 
@@ -817,7 +843,7 @@ class matrixArray(matrixArrayBase):
         '''
         Constructor
         '''
-        super(matrixArray, self).__init__(*args,  **hint)
+        super(matrixArray, self).__init__(*args, **hint)
 
     def __setitem__(self, key, value):
         
