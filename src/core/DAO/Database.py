@@ -239,10 +239,11 @@ class DataAdv(DataBase, threading.Thread):
         self.daemon = True
         self.cursor = None
         
+        self.counter= 0
+        
         self.start()
                 
     def register(self, type_str, sql_str = None, *args, **hint):
-        
         # open a cursor
         # enter in background sql event loop
         if  not self.startloop.isSet():
@@ -251,6 +252,8 @@ class DataAdv(DataBase, threading.Thread):
         if  self.input_status != True:
             return
            
+        self.counter += 1
+        
         sqls = SQLparser(
                          sql_str, 
                          *args, 
@@ -274,10 +277,12 @@ class DataAdv(DataBase, threading.Thread):
     
     def dispatch(self):
         
+        while not self._input.empty():
+            pass
+        
         if  self.startloop.isSet():
             self.startloop.clear()
-        
-        if  self.stoprequest.isSet():
+        \
             self.stoprequest.clear()
             
         if  self.input_status == False:
@@ -286,9 +291,11 @@ class DataAdv(DataBase, threading.Thread):
             return None
         
         list = []
-        while not self._output.empty():
-            results = self._output.get() 
+        while self.counter != 0:
+            results = self._output.get(block=True) 
             list.append(results)
+            
+            self.counter -= 1
      
         return list   
 
@@ -298,7 +305,7 @@ class DataAdv(DataBase, threading.Thread):
             try:
                 # sql event loop
                 job = self._input.get(True, 0.05)
-                
+                print('Preprocessing data...')
                 # callback
                 self.execl(job)
                 
