@@ -100,7 +100,7 @@ WHERE table_schema = '%s' AND
         finally:
             self.connection.commit()
             self.cursor.close()
-            self.cursor = None    
+            self.cursor=None    
     # This method can be safe
     def __del__(self):
         if self.connection:
@@ -115,6 +115,7 @@ class DataBase(Connector):
     def __init__(self, **config):
         super(DataBase, self).__init__(**config)
         
+        self._input = queue.Queue()
         self._output = queue.Queue()
     
     def set_connector(self, db=''):
@@ -136,12 +137,13 @@ class DataBase(Connector):
                          **hint
                          ).begin()
         
-        i = 0
-        with self.Cursor():
+        if  self.cursor == None:
+            with self.Cursor():
+                for sql in sqls:
+                    callback(sql)
+        else:
             for sql in sqls:
-                callback(sql)
-                i += 1
-                print(i)
+                self._input.put( (sql, callback) )              
                 
     def onQuery(self, sql):
         print('\t query begins')
@@ -151,7 +153,7 @@ class DataBase(Connector):
             results = self.cursor.fetchall()
             self.json(results)
         except mysql.connector.Error as err:
-            print( 'Error 03! ' + self.__str__() )
+            print( 'Error on query! ' + self.__str__() )
             raise(err)
         print('\t query ends')
     
@@ -214,19 +216,17 @@ class DataBase(Connector):
         print('\t\t transform ends')
     
     def __str__(self):
-        return "Database_Basic"               
+        return "Database_Basic"   
 
-                 
-class DBManager(DataBase, threading.Thread):
+    
+class DataAdv(DataBase, threading.Thread):
 
     def __init__(self, **config):
         DataBase.__init__(self, **config)
-        threading.Thread.__init__(self)
         
-        self._info = queue.Queue()
-        self._input = queue.Queue()
-        self._output = queue.Queue()        
-        self._subjobs = queue.Queue() 
+        self.config = config
+        
+        threading.Thread.__init__(self)     
 
         self.stoprequest = threading.Event()
         self.startloop = threading.Event()
@@ -240,83 +240,45 @@ class DBManager(DataBase, threading.Thread):
         self.cursor = None
         
         self.start()
-    
-    # cursor should lie in method domain
-    # should consider transaction situations
-#     @contextlib.contextmanager
-#     def Cursor(self):
-#         # setup, only when the first time
-#         print('start ... ')
-#         if  self.cursor_setup == False:
-#             self.cursor       =  self.connection.cursor()
-#             self.cursor_close =  False
-#             self.cursor_setup =  True
-#         try:
-#             yield
-#         # tear down
-#         except mysql.connector.Error as err:
-#             print('rollback')
-#             print(err)
-#             self.connection.rollback()
-#             self.cursor_setup =  False 
-#             self.cursor_close =  True  
-#         # only when the last time
-#         finally:
-#             print('I am executed!')
-#             if  self.cursor_close == True:
-#                 self.cursor.close()
-#                 self.cursor_setup  = False     
-    @contextlib.contextmanager            
-    def Transaction(self):
-        # setup
-        print('Master: I am in')
-        print('\t cursor open')
-        self.cursor = self.connection.cursor()
-        try:
-            yield
-        # tear down
-        except mysql.connector.Error as err:
-            print('\t rollback')
-            print(err)
-            self.connection.rollback()
-            self.cursor.close()
-            self.cursor = None
-        finally:
-            if  self.cursor:
-                print('\t close cursor')
-                self.connection.commit()
-                self.cursor.close()
-                self.cursor = None
                 
-    def register(self, task_str, sql_str = None, *args, **hint):
+    def register(self, type_str, sql_str = None, *args, **hint):
         
-        if  self.cursor == None:## need to create a cursor here
+        # open a cursor
+        # enter in background sql event loop
+        if  not self.startloop.isSet():
             self.startloop.set()
-        
-        if  self.input_status == True:
-            self._info.put( Task(task_str) )
-               
-            sqls = SQLparser(
-                             sql_str, 
-                             *args, 
-                             **hint
-                             ).begin()
             
-            for sql in sqls:
-                self._input.put(sql)        
+        if  self.input_status != True:
+            return
+           
+        sqls = SQLparser(
+                         sql_str, 
+                         *args, 
+                         **hint
+                         ).begin()
+        
+        for sql in sqls:
+            # specif a transaction id, we will allocate a thread to execute it
+            self._input.put( job(type_str, sql) )
     
-    def fetchall(self):
+    def execl(self, job):
+        if  job.name == 'mysqlerror':
+            print('\t\t master find an error event:' + job.data)
+            raise(job.data)
+        if  job.name == 'insert':
+            self.onAlter(job.data)
+            return
+        if  job.name == 'query':
+            self.onQuery(job.data)
+            return
+    
+    def dispatch(self):
         
-        print('start fetching')
+        if  self.startloop.isSet():
+            self.startloop.clear()
         
-        while not self._input.empty() or not self._subjobs.empty():
-            job = self._subjobs.get()
-            print('\t terminating: ' + job.name)
-            job.join(timeout = 1)
-            print('\t terminated: '  + job.name)
-        
-        print('all jobs have been done')
-        self.stoprequest.set()
+        if  self.stoprequest.isSet():
+            self.stoprequest.clear()
             
         if  self.input_status == False:
             self.input_status =  True
@@ -329,124 +291,42 @@ class DBManager(DataBase, threading.Thread):
             list.append(results)
      
         return list   
- 
-        
-#     def run(self):
-#          
-#         while True:
-#             try:
-#                 task = self._info.get(True, 0.5)
-#                  
-#                 with self.Cursor():
-#                     try:
-#                         self.taskCheck(task)
-#                     except mysql.connector.Error as err:
-#                         self.input_status = False
-#                         raise(err)
-#                      
-#             except queue.Empty:
-#                 continue
 
+    def io(self):
+                
+        while not self.stoprequest.isSet():
+            try:
+                # sql event loop
+                job = self._input.get(True, 0.05)
+                
+                # callback
+                self.execl(job)
+                
+            except queue.Empty:
+                continue
+            except mysql.connector.Error as err:
+                self.input_status = False
+                self.stoprequest.set()
+                print( 'runtime error ' + self.name + ' : ' + err.__str__() )
+                raise('master capture an err event:' + err )
 
     def run(self):
+        
         while True:
             # wait for signal to start task-querying loop
             self.startloop.wait()
             
-            with self.Transaction():
-                while not self.stoprequest.isSet():
-                    try:
-                        task = self._info.get(True, 0.05)
-                        
-                        self.taskCheck(task)
-                        
-                    except queue.Empty:
-                        continue
-                    except mysql.connector.Error as err:
-                        self.input_status = False
-                        print( 'ERROR 02!' + self.name + ' : ' + err.__str__() )
-                        raise('master capture an err event:' + err)
-    
-                self.stoprequest.clear()
-            self.startloop.clear()
-    
-    def taskCheck(self, task):
-        if   task.name == 'mysqlerror':
-            print('\t\t master find an error event:' + task.error)
-            raise(task.error)
-        elif task.name == 'insert': # insert, update, create
-            print('\t\t creating a thread for insert')
-            self._subjobs.put( DBjob(
-                                    self.conlock,
-                                    self._info,
-                                    self._input,
-                                    self._output,
-                                    self.onAlter,
-                                    self,
-                                     )
-                                )
-        elif task.name == 'query' : # select
-            print('\t\t creating a thread for query')
-            self._subjobs.put( DBjob(
-                                     self.conlock,
-                                     self._info,
-                                     self._input,
-                                     self._output,
-                                     self.onQuery,
-                                     self,
-                                     )
-                                )
-#         elif task.name == 'start' : # create cursor
-#             print('open cursor')
-#             self.cursor = self.connection.cursor()
-#         elif task.name == 'end'   :
-#             self.stoprequest.set()
+            with \
+                self.Cursor(): # open cursor management
+                # sql event loop
+                self.io()
+
                      
-class Task(object):
+class job(object):
     
-    def __init__(self, name, data=None, error=None):
+    def __init__(self, name, data=None, call=None):
         self.name = name
         self.data = data
-        self.error= error 
+        self.call = call
  
-        
-class DBjob(threading.Thread):
-
-    def __init__(self, conlock, _info, _input, _output, sql_job_exec = None, _db = None):
-        super(DBjob, self).__init__()
-        self.db  = _db
-        self.info = _info
-        self.input = _input
-        self.output = _output
-        self.conlock = conlock  
-          
-        self.db.sql_job_exec = sql_job_exec
-        self.sql_job_exec  = sql_job_exec
-        self.stoprequest = threading.Event()
-    
-        self.daemon = True
-        self.start()
-    
-    def run(self): 
-        print('Slave ' + self.name + ' : I am in')
-        while not self.stoprequest.isSet():
-            print('job querying')
-            try:
-                args = self.input.get(True, 0.05)
-                print(self.name + ':' + 'get a job, preprocessing')
-                self.sql_job_exec(args)# something wrong
-                print(self.name + ':' + 'finished a job, idle')
-            except queue.Empty:
-                continue
-            except mysql.connector.Error as err:
-                self.info.put( Task('mysqlerror', error=err) )
-                print( 'ERROR 01! Slave ' + self.name + ' :'  + err.__str__() )
-                break
-    
-    def join(self, timeout = None):
-        print(self.name + ' join begins'   + ',whose flag is : ' + self.stoprequest._flag.__str__() )
-        self.stoprequest.set()
-        super(DBjob, self).join(timeout)
-        print(self.name + ' join finished' + ',whose flag is : ' + self.stoprequest._flag.__str__() )     
-
 Database = DataBase       
