@@ -377,6 +377,7 @@ class matrixArrayBase(list):
     # n-d matrix size detector: when it is 2-d or 1-d, it reduces to {row, col} form
     #===========================================================================
     def size(self):
+        
         class Size(object):
             
             def __init__(self, size):
@@ -665,12 +666,12 @@ class matrixArrayBase(list):
                     # if row vector
                     if  self.col == len(self):#self.row == 1:
                         flag = 1
-                        for item in key[:key.__len__()-1 ]:
+                        for item in key[:len(key)-1]:
                             if item != 0:
                                 flag = 0
                                 return None#raise( TypeError("wrong index") )
                         if flag == 1:
-                            return self[key[key.__len__()-1]]
+                            return self[key[len(key)-1]]
                     
                     # universial purpose
                     if  str(inst) == 'list index out of range':
