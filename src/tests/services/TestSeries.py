@@ -18,8 +18,8 @@ class TestSeries(object):
         dr = DataRetriever()
         
         dr.read_BSM_series_from_db(
-                                   (2014, 5, 26), 
-                                   (2014, 7, 28), 
+                                   (2014, 5, 26), #5, 26
+                                   (2014, 7, 28), #7, 28
                                    onTest_read_write_series
                                    )
 

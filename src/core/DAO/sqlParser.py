@@ -14,7 +14,7 @@ import re
 # date, datetime, time
 DATE_PATTERN = re.compile("\b*(?P<date>\d{1,2}[-/:]\d{1,2}[-/:]\d{4})\b*")
 TIME_PATTERN = re.compile("\b*(?P<time>\d{2}:\d{2}:\d{2})\b*")
-DtTm_PATTERN = re.compile("\b*(?P<dttm>\d{1,2}[-/:]\d{1,2}[-/:]\d{4} *: *\d{2}:\d{2}:\d{2})\b*")
+DtTm_PATTERN = re.compile("\b*(?P<dttm>\d{1,2}[-/:]\d{1,2}[-/:]\d{4} *: *\d{0,2}:\d{0,2}:\d{0,2})\b*")
 
 # keywords
 KyVd_PATTERN = re.compile("\b*'(?P<key>[^']+)' *: *'?(?P<value>[^']+)'?\b*")

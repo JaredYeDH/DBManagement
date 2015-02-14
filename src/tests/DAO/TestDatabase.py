@@ -11,7 +11,7 @@ config = {
     'ERISA':{
         'host'    : "localhost",
         'user'    : "root",
-        'passwd'  : "",
+        'passwd'  : "020139ERIyiak",
         'db'      : "ERI_Statistic_Analysis",
         'charset' : 'utf8',              
         },
@@ -47,7 +47,7 @@ if __name__ == '__main__':
 #     
 #     print(results)
     
-    db = DBManager(**config['ERIconfig2'])
+    db = DataAdv(**config['ERIconfig2'])
     
     db.register(
                 'query',
@@ -60,13 +60,21 @@ if __name__ == '__main__':
     db.register(
                 'query',
                 sql_query_template,
-                {'tb_col':'power_kw','db_table':'ntu_scada_hdata_mirror.ntu_scada_hdata_historic_mirror','global_MID':'M00000048A'},
+                {'tb_col':'id','db_table':'ntu_scada_hdata_mirror.ntu_scada_hdata_historic_mirror','global_MID':'M00000048A'},
                 1400824799,
                 1400857199, 
                 )
     
-    results = db.fetchall()
+    db.register(
+                'query',
+                sql_query_template,
+                {'tb_col':'id','db_table':'ntu_scada_hdata_mirror.ntu_scada_hdata_historic_mirror','global_MID':'M00000048A'},
+                1400824799,
+                1400857199, 
+                )
     
-    print(results)
+    results = db.dispatch()
+    
+    print(len(results), results)
     
     

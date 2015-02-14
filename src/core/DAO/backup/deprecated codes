@@ -1,0 +1,249 @@
+claDBManager(DataBase, threading.Thread):
+
+    def __init__(self, **config):
+        DataBase.__init__(self, **config)
+        
+        self.config = config
+        
+        threading.Thread.__init__(self)
+        
+        self._info = queue.Queue()
+        self._input = queue.Queue()
+        self._output = queue.Queue()        
+        self._subjobs = queue.Queue() 
+
+        self.stoprequest = threading.Event()
+        self.startloop = threading.Event()
+        self.conlock = threading.Condition()
+        
+        # this table maintain runtime transaction-thread relaitonship
+        self.runtime = {}
+        
+        self.cursor_setup = False
+        self.cursor_close = True
+        
+        self.input_status = True
+        self.daemon = True
+        self.cursor = None
+        
+        self.pool_start()
+        
+        self.start()
+
+    
+    def pool_start(self, amount=8):
+        for i in range(0, amount):
+            self._subjobs.put( DBjob(
+                                    self.conlock,
+                                    self._info,
+                                    self._input,
+                                    self._output,
+                                    self._execute,# get job execution funciton
+                                    DataBase( **self.config ), # sharing the same cursor and connection
+                                     )  )
+            
+    def pool_close(self):
+        for i in range(0, len(self._subjobs) ):
+            self._subjobs[i].join()
+    
+
+    @contextlib.contextmanager            
+    def Transaction(self):
+        # setup
+        print('Master: I am in')
+        print('\t cursor open')
+        self.cursor = self.connection.cursor()
+        try:
+            yield
+        # tear down
+        except mysql.connector.Error as err:
+            print('\t rollback')
+            print(err)
+            self.connection.rollback()
+        finally:
+            if  self.cursor:
+                print('\t close cursor')
+                self.connection.commit()
+                self.cursor.close()
+                
+            if  self.stoprequest.isSet():
+                self.stoprequest.clear()
+                
+    def register(self, type_str, sql_str = None, *args, **hint):
+        
+        if  not self.startloop.isSet():#self.cursor == None:## need to create a cursor here
+            self.startloop.set()
+            
+            if  self.input_status != True:
+                return
+               
+            sqls = SQLparser(
+                             sql_str, 
+                             *args, 
+                             **hint
+                             ).begin()
+            
+            try:
+                id = hint['id']
+            except Exception as e:
+                id = None
+            
+            for sql in sqls:
+                if  id:
+                    # specif a transaction id, we will allocate a thread to execute it
+                    self._input.put( job(type_str, sql) )
+                else:
+                    self._info.put( {'id':id, 'job':job(type_str, sql)} )
+                   
+                #   self._input.put(sql)        
+    
+    def execl(self, job):
+        if  job.name == 'mysqlerror':
+            print('\t\t master find an error event:' + job.data)
+            raise(job.data)
+        if  job.name == 'insert':
+            self.onAlter(job.data)
+            return
+        if  job.name == 'query':
+            self.onQuery(job.data)
+            return
+        
+    
+    def fetchall(self):
+        
+        print('start fetching')
+        
+        while not self._input.empty() or not self._subjobs.empty():
+            job = self._subjobs.get()
+            print('\t terminating: ' + job.name)
+            job.join(timeout = 1)
+            print('\t terminated: '  + job.name)
+        
+        print('all jobs have been done')
+        self.stoprequest.set()
+            
+        if  self.input_status == False:
+            self.input_status =  True
+            print('return unexpected!')
+            return None
+        
+        list = []
+        while not self._output.empty():
+            results = self._output.get() 
+            list.append(results)
+     
+        return list   
+
+    def run(self):
+        
+        while True:
+            # wait for signal to start task-querying loop
+            self.startloop.wait()
+            
+            while not self.stoprequest.isSet():
+                try:
+                    # event loop
+                    job = self._info.get(True, 0.05)
+                    
+                    # determine event type
+                    pass
+                    
+                except queue.Empty:
+                    continue
+                except mysql.connector.Error as err:
+                    self.input_status = False
+                    print( 'runtime error ' + self.name + ' : ' + err.__str__() )
+                    raise('master capture an err event:' + err)
+
+            
+        self.pool_close()
+
+    # this function has been deprecated    
+    def taskCheck(self, task):
+        if   task.name == 'mysqlerror':
+            print('\t\t master find an error event:' + task.error)
+            raise(task.error)
+        elif task.name == 'insert': # insert, update, create
+            print('\t\t creating a thread for insert')
+            self._subjobs.put( DBjob(
+                                    self.conlock,
+                                    self._info,
+                                    self._input,
+                                    self._output,
+                                    self.onAlter,
+                                    self,
+                                     )
+                                )
+        elif task.name == 'query' : # select
+            print('\t\t creating a thread for query')
+            self._subjobs.put( DBjob(
+                                     self.conlock,
+                                     self._info,
+                                     self._input,
+                                     self._output,
+                                     self.onQuery,
+                                     self,
+                                     )
+                                )
+#         elif task.name == 'start' : # create cursor
+#             print('open cursor')
+#             self.cursor = self.connection.cursor()
+#         elif task.name == 'end'   :
+#             self.stoprequest.set()
+                     
+class job(object):
+    
+    def __init__(self, name, data=None):
+        self.name = name
+        self.data = data
+ 
+        
+class DBjob(threading.Thread):
+
+    def __init__(self, conlock, _info, _input, _output, sql_job_exec = None, _db = None):
+        super(DBjob, self).__init__()
+        self.db  = _db
+        self.info = _info
+        self.input = _input
+        self.output = _output
+        self.conlock = conlock  
+        
+        self.transc_q = queue.Queue()
+        
+        self.stoprequest = threading.Event()
+    
+        self.daemon = True
+        self.start()
+    
+    def run(self): 
+        print('Slave ' + self.name + ' : I am in')
+            
+        while not self.stoprequest.isSet():
+            
+            try:
+                job = self.transc_q.get(True, 0.5)#self.input.get(True, 0.05)
+                print('get a transaction job')
+                self.db.execl(job)
+            except queue.Empty:
+                continue
+            except mysql.connector.Error as err:
+                self.info.put( job('mysqlerror', data=err) )
+                print( 'ERROR in Slave ' + self.name + ' :'  + err.__str__() )
+            
+                
+            try:
+                job = self.input.get(True, 0.5)
+                print('get a non-transaction job')
+                self.db.execl(job)
+            except queue.Empty:
+                continue
+            except mysql.connector.Error as err:
+                self.info.put( job('mysqlerror', data=err) )
+                print( 'ERROR in Slave ' + self.name + ' :'  + err.__str__() )
+            
+    
+    def join(self, timeout = None):
+        print(self.name + ' join begins'   + ',whose flag is : ' + self.stoprequest._flag.__str__() )
+        self.stoprequest.set()
+        super(DBjob, self).join(timeout)
+        print(self.name + ' join finished' + ',whose flag is : ' + self.stoprequest._flag.__str__() )     

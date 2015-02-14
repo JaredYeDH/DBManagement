@@ -13,11 +13,31 @@ import threading
 
 import mysql.connector
 
+CREATE = """
+SHOW CREATE TABLE %(table_name)?s          
+"""
+
+INSERT_PATTERN = """
+
+"""
+
 # -- master - slaves architecture --
 # --third party--
 # --local dependency--
 #from core.DAO.Log.LogManagement import logManager
 #from core.utils.timmer import timmer, delta
+
+class RunTimeErr(Exception):
+    
+    def __init__(self, string=None, name=None, err=None):
+        self._err = mysql.connector.Error
+        
+        self._str = 'runtime error ' + self.name + ' : ' + err.__str__()
+        
+        print(self._str)
+        
+        Exception.__init__(self._str)
+        
 
 from core.DAO.sqlParser import SQLparser
 
@@ -37,8 +57,10 @@ class Connector(object):
     # these mapping is used for general database querying, updating purpose, and should not be binded to models layer
     sqlMapping = {
         'alter' : {
-            'create' : None,
-            'insert' : None,
+            'create' : CREATE,
+            'insert' : """
+INSERT (INGNORE)? %(table_name)s VALUES \((\w+,?)*\)
+            """,
             'alter'  : None,
             'delete' : None,
         },
@@ -75,7 +97,17 @@ WHERE table_schema = '%s' AND
                 self.connection=mysql.connector.connect(**config)
             if self.db == '':
                 pass
+
+
+    def _instantiate(self):
+    
+        if  self._instance == None:
+            self._instance =  self.__class__()
+        else:
+            pass
+        return self._instance
             
+
     def set_connector(self, db=''):
         
         raise NotImplementedError()
@@ -103,17 +135,17 @@ WHERE table_schema = '%s' AND
             self.cursor=None    
     # This method can be safe
     def __del__(self):
-        if self.connection:
+        if  self.connection:
             print('db deleted')
             self.connection.close()   
             
 
 # the basic database is used for querying or non-transaction based database interacting
 # the database alwasy returns Json style data in python             
-class DataBase(Connector): 
+class Database(Connector): 
     
     def __init__(self, **config):
-        super(DataBase, self).__init__(**config)
+        super(Database, self).__init__(**config)
         
         self._input = queue.Queue()
         self._output = queue.Queue()
@@ -137,13 +169,9 @@ class DataBase(Connector):
                          **hint
                          ).begin()
         
-        if  self.cursor == None:
-            with self.Cursor():
-                for sql in sqls:
-                    callback(sql)
-        else:
+        with self.Cursor():
             for sql in sqls:
-                self._input.put( (sql, callback) )              
+                callback(sql)             
                 
     def onQuery(self, sql):
         print('\t query begins')
@@ -219,10 +247,10 @@ class DataBase(Connector):
         return "Database_Basic"   
 
     
-class DataAdv(DataBase, threading.Thread):
+class DataNode(Database, threading.Thread):
 
     def __init__(self, **config):
-        DataBase.__init__(self, **config)
+        Database.__init__(self, **config)
         
         self.config = config
         
@@ -242,6 +270,12 @@ class DataAdv(DataBase, threading.Thread):
         self.counter= 0
         
         self.start()
+    
+    def addJob(self):
+        self.counter += 1
+    
+    def rmvJob(self):
+        self.counter -= 1
                 
     def register(self, type_str, sql_str = None, *args, **hint):
         # open a cursor
@@ -250,9 +284,9 @@ class DataAdv(DataBase, threading.Thread):
             self.startloop.set()
             
         if  self.input_status != True:
-            return
+            return None
            
-        self.counter += 1
+        self.addJob()
         
         sqls = SQLparser(
                          sql_str, 
@@ -280,32 +314,23 @@ class DataAdv(DataBase, threading.Thread):
         while not self._input.empty():
             pass
         
-        if  self.startloop.isSet():
-            self.startloop.clear()
-        \
-            self.stoprequest.clear()
-            
-        if  self.input_status == False:
-            self.input_status =  True
-            print('return unexpected!')
-            return None
+        # deactivate loop                          # activate input 
+        self.loop_set(), self.stoprequest.clear(), self.set_input_set()
         
         list = []
-        while self.counter != 0:
-            results = self._output.get(block=True) 
-            list.append(results)
+        while self.counter != 0:  
+            self.rmvJob()
+            # block calling thread until get a job
+            list.append( self._output.get(block=True) )
             
-            self.counter -= 1
-     
         return list   
 
-    def io(self):
+    def ioLoop(self):
                 
         while not self.stoprequest.isSet():
             try:
                 # sql event loop
                 job = self._input.get(True, 0.05)
-                print('Preprocessing data...')
                 # callback
                 self.execl(job)
                 
@@ -315,7 +340,7 @@ class DataAdv(DataBase, threading.Thread):
                 self.input_status = False
                 self.stoprequest.set()
                 print( 'runtime error ' + self.name + ' : ' + err.__str__() )
-                raise('master capture an err event:' + err )
+                raise mysql.connector.Error('master capture an err event:' + err )
 
     def run(self):
         
@@ -326,8 +351,27 @@ class DataAdv(DataBase, threading.Thread):
             with \
                 self.Cursor(): # open cursor management
                 # sql event loop
-                self.io()
+                self.ioLoop()
 
+    def loop_set(self):
+        if  self.startloop.isSet():
+            # set flag block the daemon thread
+            self.startloop.clear()
+        else:
+            self.startloop.set()           
+    
+    def set_input_set(self):
+        if  self.input_status == False:
+            self.input_status =  True
+            print('return unexpected!')
+            return None
+        else:
+            self.input_status =  False
+            
+    def join(self, timeout=None):
+        self.stoprequest.set()
+        # block calling thread until the thread whose join is called is terminated   
+        super(DataNode, self).join(timeout)
                      
 class job(object):
     
@@ -336,4 +380,4 @@ class job(object):
         self.data = data
         self.call = call
  
-Database = DataBase       
+Database = Database       
