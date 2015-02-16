@@ -25,7 +25,10 @@ This file defined master-slave database model to handle users' data connection w
                        delta.py
 This is aimed as an extention to the 'dateutils.relativedelta'. The 'delta' class is a subclass of relativedelta exclusively for series analysis routine
 
-The following modules have been moved to other projects. See "PyMatrix", "djangoApps", "HightPerformanceWebArchitecture"
+The following modules have been moved to other projects. See "PyMatrix", "djangoApps",
+--------------------------------------------------------------------------------------
+"HightPerformanceWebArchitecture"
+---------------------------------
 
     src->                    
         utils->
